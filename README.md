@@ -1,4 +1,6 @@
 ## Xây dựng hệ thống xe tự lái và sofware điều khiển
+## 0.
+
 ## 1. System Architecture
 -  Dùng mạch ESP32, yêu cầu điều khiển qua Website (Internet) -> mô hình IoT qua Cloud là phù hợp nhất.
 
@@ -60,3 +62,6 @@
     + Viết file index.html (có thêm css thì càng tốt): Tạo các nút bấm (lên, xuống, trái, phải, Auto/Manual)
     + Viết script.js: Sử dụng Firebase SDK cho Web (JavaScript).Logic: Khi bấm nút "Tiến" $\rightarrow$ set(ref(db, 'command'), 'FORWARD'). Khi thả nút $\rightarrow$ set(ref(db, 'command'), 'STOP').
     + Deploy lên Firebase Hosting (miễn phí và chung hệ sinh thái) hoặc chạy local.
+
+
+
