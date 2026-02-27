@@ -1,5 +1,40 @@
 ## Xây dựng hệ thống xe tự lái và sofware điều khiển
-## 0.
+
+## 0. Prepare
+- Các tính năng sẽ có:
+    + Tự động lái và né khi phát hiện vật thể xung quanh
+    + Tự động bám theo vật thể 
+    + Khả năng điều khiển từ website (kéo nút trên web, dùng giọng nói)
+    + Điều khiển bằng tay thông qua camera (left, right, back, forward, stop)
+
+- Vật phẩm:
+    + Phần mạch xử lý: 
+        - ESP32 Development Board (ESP32-WROOM-32)
+        - Dây cáp nạp (Kết nối ESP32 với máy tính)
+        - Mạch mở rộng ESP32
+    + Phần động cơ và lái:
+        - Module điều khiển động cơ L298N
+        - Động cơ DC
+        - Bánh xe
+    + Phần cảm biến:
+        - Cảm biến siêu âm HC-SR04 (đo khoảng cách đến vật thể)
+        - Động cơ Servo SG90 
+        - Giá đỡ cảm biến
+        - Cảm biến hồng ngoại
+    + Phần nguồn điện:
+        - Pin Li-ion 18650
+        - Đế dựng pin
+        - Công tắc 
+    + Phụ kiện khác:
+        - Bộ khung xe
+        - Dây cắm testborad
+            + M-F: 20 đến 30 sợi
+            + M-M: 10 sợi
+            + F-F: 10 sợi
+            + Dây rút, tua vít
+
+- Gắn camera, gửi lên chatbot, APT free (Dee), Sensor filltion, gom 3 ss thành 1, Tesla, Waymo
+- Sử dụng Deep Learning để tăng độ nhạy camer iến , giải thuật HDR, Deep Camera ()
 
 ## 1. System Architecture
 -  Dùng mạch ESP32, yêu cầu điều khiển qua Website (Internet) -> mô hình IoT qua Cloud là phù hợp nhất.
@@ -62,6 +97,7 @@
     + Viết file index.html (có thêm css thì càng tốt): Tạo các nút bấm (lên, xuống, trái, phải, Auto/Manual)
     + Viết script.js: Sử dụng Firebase SDK cho Web (JavaScript).Logic: Khi bấm nút "Tiến" $\rightarrow$ set(ref(db, 'command'), 'FORWARD'). Khi thả nút $\rightarrow$ set(ref(db, 'command'), 'STOP').
     + Deploy lên Firebase Hosting (miễn phí và chung hệ sinh thái) hoặc chạy local.
+
 
 
 
