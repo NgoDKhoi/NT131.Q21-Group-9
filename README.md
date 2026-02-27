@@ -6,6 +6,8 @@
     + Tự động bám theo vật thể 
     + Khả năng điều khiển từ website (kéo nút trên web, dùng giọng nói)
     + Điều khiển bằng tay thông qua camera (left, right, back, forward, stop)
+    + Gắn camera, gửi lên chatbot, APT free (Dee), Sensor filltion, gom 3 ss thành 1, Tesla, Waymo (*)
+    + Sử dụng Deep Learning để tăng độ nhạy camer iến , giải thuật HDR, Deep Camera (*)
 
 - Vật phẩm:
     + Phần mạch xử lý: 
@@ -33,8 +35,7 @@
             + F-F: 10 sợi
             + Dây rút, tua vít
 
-- Gắn camera, gửi lên chatbot, APT free (Dee), Sensor filltion, gom 3 ss thành 1, Tesla, Waymo
-- Sử dụng Deep Learning để tăng độ nhạy camer iến , giải thuật HDR, Deep Camera ()
+
 
 ## 1. System Architecture
 -  Dùng mạch ESP32, yêu cầu điều khiển qua Website (Internet) -> mô hình IoT qua Cloud là phù hợp nhất.
@@ -46,7 +47,7 @@
         - Vận động: L298N điều khiển 2 (hoặc 4) động cơ DC.
         - Giác quan: HC-SR04 (mắt) + SG90 Servo (cổ xoay để nhìn trái/phải).
     + Tầng Mạng & Server (Network & Cloud Layer):
-        - Giao thức: Sử dụng Firebase Realtime Database (Google). Đây là lựa chọn tốt nhất cho sinh viên vì tốc độ phản hồi nhanh (Realtime), dễ cấu hình hơn AWS, và miễn phí.
+        - Giao thức: Sử dụng Firebase Realtime Database (Google). Hoặc có thể cấu hình bằng AWS
         - Dữ liệu: Lưu trạng thái điều khiển (Ví dụ: control_signal: "UP", mode: "AUTO").
     + Tầng Người dùng (User Layer - Web App):
         - Giao diện HTML/CSS/JS đơn giản kết nối tới Firebase để gửi lệnh.
