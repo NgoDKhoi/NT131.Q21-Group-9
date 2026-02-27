@@ -6,8 +6,8 @@
     + Tự động bám theo vật thể 
     + Khả năng điều khiển từ website (kéo nút trên web, dùng giọng nói)
     + Điều khiển bằng tay thông qua camera (left, right, back, forward, stop)
-    + Gắn camera, gửi lên chatbot, APT free (Dee), Sensor filltion, gom 3 ss thành 1, Tesla, Waymo (*)
     + Sử dụng Deep Learning để tăng độ nhạy camer iến , giải thuật HDR, Deep Camera (*)
+        - Gắn camera, gửi lên chatbot, APT free (Dee), Sensor filltion, gom 3 ss thành 1, Tesla, Waymo (*)
 
 - Vật phẩm:
     + Phần mạch xử lý: 
