@@ -1,19 +1,19 @@
-## Xây dựng hệ thống xe tự lái và sofware điều khiển
+# Đồ án xây dựng hệ thống xe tự lái và sofware điều khiển
 
 ## 0. Prepare
-- Các tính năng sẽ có:
+- Các tính năng dự kiến có:
     + Tự động lái và né khi phát hiện vật thể xung quanh
-    + Tự động bám theo vật thể 
-    + Khả năng điều khiển từ website (kéo nút trên web, dùng giọng nói)
+    + Khả năng điều khiển từ website
     + Điều khiển bằng tay thông qua camera (left, right, back, forward, stop)
-    + Sử dụng Deep Learning để tăng độ nhạy camer iến , giải thuật HDR, Deep Camera (*)
-        - Gắn camera, gửi lên chatbot, APT free (Dee), Sensor filltion, gom 3 ss thành 1, Tesla, Waymo (*)
+    + Sử dụng Deep Learning để tăng độ nhạy cảm iến , giải thuật HDR, Deep Camera (Dự kiến)
+        - Gắn camera, gửi lên chatbot, APT free (Dee), Sensor filltion, gom 3 ss thành 1, Tesla, Waymo
 
 - Vật phẩm:
     + Phần mạch xử lý: 
         - ESP32 Development Board (ESP32-WROOM-32)
         - Dây cáp nạp (Kết nối ESP32 với máy tính)
         - Mạch mở rộng ESP32
+        - (Có thêm có thêm Arduino)
     + Phần động cơ và lái:
         - Module điều khiển động cơ L298N
         - Động cơ DC
