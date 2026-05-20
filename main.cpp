@@ -1,5 +1,6 @@
 #include <Servo.h>
 
+// Khai báo chân
 int ENA = 5;  int ENB = 6;
 int IN1 = 7;  int IN2 = 8;
 int IN3 = 9;  int IN4 = 11;

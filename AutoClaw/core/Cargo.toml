@@ -1,0 +1,15 @@
+[package]
+name    = "zeroclaw-core"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name       = "zeroclaw_core"
+crate-type = ["cdylib"]   # Bắt buộc để Maturin build thành .so cho Python
+
+[dependencies]
+# PyO3: Python-Rust bridge
+pyo3 = { version = "0.21", features = ["extension-module"] }
+
+# Serial port I/O (thay thế pyserial hoàn toàn)
+serialport = "4.3.0"

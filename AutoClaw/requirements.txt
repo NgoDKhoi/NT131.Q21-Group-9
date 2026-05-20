@@ -1,0 +1,25 @@
+# ══════════════════════════════════════════════════════
+#  AutoClaw — Python Dependencies
+#  Cài đặt: pip install -r requirements.txt
+#
+#  Lưu ý:
+#  - pyserial ĐÃ BỊ XÓA: Serial nay do Rust Core quản lý
+#  - mediapipe ĐÃ BỊ XÓA: dùng CDN client-side (không cần server)
+#  - zeroclaw_core build riêng: cd core && maturin develop
+# ══════════════════════════════════════════════════════
+
+# Web Framework
+Flask==3.0.0
+flask-cors==4.0.0
+
+# Config — đọc .env
+python-dotenv==1.0.1
+
+# Computer Vision (camera streaming server-side)
+opencv-python-headless==4.8.1.78
+
+# Rust-Python bridge build tool
+maturin==1.4.0
+
+# Ngrok tunnel (HTTPS cho Voice API + remote access)
+pyngrok==7.2.0

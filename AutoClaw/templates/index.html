@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ZeroClaw — Control Panel</title>
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+<header>
+  <div class="logo">ZERO<span>CLAW</span></div>
+  <div class="subtitle">AUTONOMOUS ROBOT — CONTROL PANEL v3.0</div>
+</header>
+
+<!-- Status -->
+<div class="card">
+  <div class="card-title">▸ SYSTEM STATUS</div>
+  <div class="status-grid">
+    <div class="stat-box">
+      <div class="stat-label">DISTANCE</div>
+      <div class="stat-value" id="dist">---</div>
+      <div class="stat-unit">cm</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-label">LAST CMD</div>
+      <div class="stat-value" id="last-cmd" style="font-size:14px;padding-top:6px">IDLE</div>
+      <div class="stat-unit">&nbsp;</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-label">CONNECTION</div>
+      <div class="stat-value" style="font-size:13px;padding-top:4px">
+        <span class="dot" id="conn-dot"></span>
+        <span id="conn-text" style="font-size:11px;vertical-align:middle;margin-left:4px">LIVE</span>
+      </div>
+      <div class="stat-unit">&nbsp;</div>
+    </div>
+  </div>
+</div>
+
+<!-- Camera -->
+<div class="card" id="camera-card">
+  <div class="card-title">▸ ROBOT CAMERA — SNAPSHOT</div>
+  <div class="camera-wrap">
+    <img id="camera-img" src="" alt="Chưa có ảnh"
+         style="background:#000;min-height:160px;">
+    <div class="corner tl"></div>
+    <div class="corner tr"></div>
+    <div class="corner bl"></div>
+    <div class="corner br"></div>
+    <div class="cam-label">PI CAM · ✌ ĐỂ CHỤP</div>
+    <div class="cam-rec">
+      <div class="rec-dot"></div>
+      <span id="cam-timestamp">--:--:--</span>
+    </div>
+  </div>
+</div>
+
+<!-- Auto Drive -->
+<div class="card">
+  <div class="card-title">▸ AUTO DRIVE</div>
+  <button class="btn-auto" id="btn-auto" onclick="toggleAuto()">
+    <span class="auto-icon" id="auto-icon">⚙</span>
+    <span id="auto-label">BẬT TỰ LÁI</span>
+  </button>
+</div>
+
+<!-- Movement -->
+<!-- BUG FIX: Bỏ thẻ </div> thừa khiến card đóng sớm,
+     keys-hint bị rơi ra ngoài card -->
+<div class="card">
+  <div class="card-title">▸ MOVEMENT CONTROL</div>
+  <div class="dpad-wrap" id="dpad-wrap">
+    <div class="dpad">
+      <div class="empty"></div>
+      <button class="btn" onclick="cmd('F')" id="btn-F">
+        <div class="icon">▲</div><div class="lbl">FWD</div>
+      </button>
+      <div class="empty"></div>
+
+      <button class="btn" onclick="cmd('L')" id="btn-L">
+        <div class="icon">◀</div><div class="lbl">LEFT</div>
+      </button>
+      <button class="btn stop" onclick="cmd('S')" id="btn-S">
+        <div class="icon">■</div><div class="lbl">STOP</div>
+      </button>
+      <button class="btn" onclick="cmd('R')" id="btn-R">
+        <div class="icon">▶</div><div class="lbl">RIGHT</div>
+      </button>
+
+      <div class="empty"></div>
+      <button class="btn" onclick="cmd('B')" id="btn-B">
+        <div class="icon">▼</div><div class="lbl">BACK</div>
+      </button>
+      <div class="empty"></div>
+    </div>
+  </div>
+  <div class="keys-hint">
+    Phím tắt: <kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd>
+    — Dừng: <kbd>X</kbd> — Auto: <kbd>P</kbd> — Voice: <kbd>V</kbd>
+  </div>
+</div>
+
+<!-- Servo -->
+<div class="card">
+  <div class="card-title">▸ SERVO CAMERA</div>
+  <div class="servo-row">
+    <button class="btn-servo" onclick="cmd('1')"><span class="sico">↰</span> TRÁI</button>
+    <button class="btn-servo" onclick="cmd('3')"><span class="sico">↕</span> GIỮA</button>
+    <button class="btn-servo" onclick="cmd('2')"><span class="sico">↱</span> PHẢI</button>
+  </div>
+</div>
+
+<!-- Voice Command -->
+<div class="card">
+  <div class="card-title">▸ VOICE COMMAND</div>
+  <div class="voice-body">
+    <button class="btn-mic" id="btn-mic" onclick="toggleVoice()" title="Nhấn để nói">
+      🎙
+    </button>
+    <div class="voice-status" id="voice-status">NHẤN ĐỂ NÓI</div>
+    <div class="voice-transcript" id="voice-transcript">—</div>
+    <div class="voice-map">
+      <div>"tiến / tới"       → <span>FORWARD</span></div>
+      <div>"lùi / xuống"      → <span>BACKWARD</span></div>
+      <div>"trái / rẽ trái"   → <span>LEFT</span></div>
+      <div>"phải / rẽ phải"   → <span>RIGHT</span></div>
+      <div>"dừng / stop"      → <span>STOP</span></div>
+      <div>"nhìn trái/phải"   → <span>SERVO</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- Hand Gesture Control -->
+<div class="card">
+  <div class="card-title">▸ HAND GESTURE CONTROL</div>
+  <div class="hand-body">
+    <button class="btn-hand" id="btn-hand" onclick="toggleHandTracking()">
+      <span>✋</span><span id="hand-btn-label">BẬT CAMERA TAY</span>
+    </button>
+    <div class="hand-loading" id="hand-loading">⏳ ĐANG TẢI AI MODEL...</div>
+    <div class="hand-preview-wrap" id="hand-preview">
+      <video id="hand-video" autoplay playsinline muted></video>
+      <canvas id="hand-canvas"></canvas>
+    </div>
+    <div class="gesture-display" id="gesture-display">— CHƯA NHẬN DIỆN —</div>
+    <div class="hand-map">
+      <div>👌 OK Sign       → <span>TIẾN</span></div>
+      <div>✊ Nắm đấm       → <span>DỪNG</span></div>
+      <div>☝ Chỉ lên        → <span>LÙI</span></div>
+      <div>✌ Chữ V          → <span>CHỤP ẢNH 📸</span></div>
+      <div>👈 Ngón cái trái → <span>RẼ TRÁI</span></div>
+      <div>👉 Ngón cái phải → <span>RẼ PHẢI</span></div>
+      <div>🤟 I Love You    → <span>BẬT/TẮT TỰ LÁI</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- Log -->
+<div class="card">
+  <div class="card-title">▸ COMMAND LOG</div>
+  <div class="log-box" id="log-box">
+    <div class="log-line">— System ready —</div>
+  </div>
+</div>
+
+<footer>ZEROCLAW ROBOTICS · HCMC · 2025</footer>
+
+<!-- Script load order quan trọng:
+     1. api.js   — định nghĩa window.AppState, cmd(), toggleAuto()
+     2. ui.js    — định nghĩa appendLogRaw(), polling, keyboard
+     3. voice.js — dùng cmd(), appendLogRaw()
+     4. hand_tracking.js — ESM module, dùng window.* -->
+<script src="{{ url_for('static', filename='js/api.js') }}"></script>
+<script src="{{ url_for('static', filename='js/ui.js') }}"></script>
+<script src="{{ url_for('static', filename='js/voice.js') }}"></script>
+<script type="module" src="{{ url_for('static', filename='js/hand_tracking.js') }}"></script>
+
+</body>
+</html>
