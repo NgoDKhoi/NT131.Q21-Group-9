@@ -43,7 +43,7 @@ const GESTURE_MAP = {
   'OK_Sign'     : { fn: () => window.cmd('F'),        label: '👌 TIẾN LÊN',        interval: CMD_INTERVAL     },
   'Closed_Fist' : { fn: () => window.cmd('S'),        label: '✊ DỪNG LẠI',        interval: CMD_INTERVAL     },
   'Pointing_Up' : { fn: () => window.cmd('B'),        label: '☝ LÙI LẠI',         interval: CMD_INTERVAL     },
-  'Victory'     : { fn: () => triggerSnapshot(),      label: '✌ CHỤP ẢNH',        interval: SNAPSHOT_INTERVAL },
+  'Victory'     : { fn: () => triggerAiAnalyze(),      label: '✌ AI PHÂN TÍCH',    interval: SNAPSHOT_INTERVAL },
   'ILoveYou'    : { fn: () => window.toggleAuto(),   label: '🤟 BẬT/TẮT TỰ LÁI',  interval: TOGGLE_INTERVAL  },
   'Thumb_Left'  : { fn: () => window.cmd('L'),        label: '👈 RẼ TRÁI',         interval: CMD_INTERVAL     },
   'Thumb_Right' : { fn: () => window.cmd('R'),        label: '👉 RẼ PHẢI',         interval: CMD_INTERVAL     },
@@ -131,41 +131,68 @@ function resolveThumbDir(lm) {
 }
 
 // ════════════════════════════════════════════════════════════
-//  SNAPSHOT — Chụp ảnh từ Pi Camera khi Victory ✌ detected
+//  AI ANALYZE — Chụp ảnh và gửi Gemini phân tích
 // ════════════════════════════════════════════════════════════
-async function triggerSnapshot() {
+async function triggerAiAnalyze() {
   const now = Date.now();
   if (now - lastSnapshotTime < SNAPSHOT_INTERVAL) return; // Cooldown
   lastSnapshotTime = now;
+
+  // Visual feedback: thêm class 'scanning' cho camera card để tạo hiệu ứng radar quét
+  const camWrap = document.querySelector('.camera-wrap');
+  camWrap?.classList.add('scanning');
 
   // Flash animation trên camera card
   camCard?.classList.add('snapshot-flash');
   setTimeout(() => camCard?.classList.remove('snapshot-flash'), 400);
 
+  // Cập nhật mô tả AI thành "Đang phân tích..."
+  const aiDesc = document.getElementById('ai-desc');
+  const aiSuggestWrap = document.getElementById('ai-suggest-wrap');
+  const aiSuggestVal = document.getElementById('ai-suggest-val');
+  if (aiDesc) aiDesc.textContent = 'Đang phân tích...';
+  if (aiSuggestWrap) aiSuggestWrap.style.display = 'none';
+
   try {
-    const res = await fetch('/snapshot');
+    const res = await fetch('/ai_analyze');
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
-    // Nhận JPEG blob → tạo Object URL → cập nhật img
-    const blob = await res.blob();
-    const url  = URL.createObjectURL(blob);
+    const data = await res.json();
+    if (data.status === 'success') {
+      // Cập nhật hình ảnh camera từ Base64 mà server trả về để khớp chính xác ảnh AI nhìn thấy
+      if (camImg && data.image) {
+        camImg.src = data.image;
+      }
 
-    if (camImg) {
-      // Revoke URL cũ nếu là blob (tránh memory leak)
-      if (camImg.src.startsWith('blob:')) URL.revokeObjectURL(camImg.src);
-      camImg.src = url;
+      // Cập nhật timestamp trên camera card
+      const tsEl = document.getElementById('cam-timestamp');
+      if (tsEl) tsEl.textContent = new Date().toLocaleTimeString('vi-VN');
+
+      // Điền thông tin phản hồi của AI vào giao diện
+      if (aiDesc) aiDesc.textContent = data.description;
+      if (aiSuggestVal) aiSuggestVal.textContent = window.CMD_LABELS?.[data.command] || data.command;
+      if (aiSuggestWrap) aiSuggestWrap.style.display = 'block';
+
+      // Kích hoạt nhấp nháy phát sáng nút D-pad tương ứng trong 5 giây
+      if (window.showAiSuggestion) {
+        window.showAiSuggestion(data.command, data.description);
+      }
+
+      window.appendLogRaw?.('🤖 AI: ' + data.description + ` (Gợi ý: ${data.command})`, 'var(--blue)');
+    } else {
+      throw new Error(data.message || 'Lỗi không xác định');
     }
 
-    // Cập nhật timestamp trên camera card
-    const tsEl = document.getElementById('cam-timestamp');
-    if (tsEl) tsEl.textContent = new Date().toLocaleTimeString('vi-VN');
-
-    window.appendLogRaw?.('📸 Snapshot @ ' + new Date().toLocaleTimeString('vi-VN'), 'var(--green)');
-
   } catch (err) {
-    window.appendLogRaw?.('📸 Snapshot lỗi: ' + err.message, 'var(--red)');
+    if (aiDesc) aiDesc.textContent = 'Lỗi phân tích: ' + err.message;
+    window.appendLogRaw?.('🤖 AI lỗi: ' + err.message, 'var(--red)');
+  } finally {
+    // Tắt hiệu ứng radar quét
+    camWrap?.classList.remove('scanning');
   }
 }
+
+window.triggerAiAnalyze = triggerAiAnalyze;
 
 // ════════════════════════════════════════════════════════════
 //  MEDIAPIPE INIT

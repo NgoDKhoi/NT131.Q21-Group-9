@@ -3,7 +3,7 @@
 // ============================================================
 
 // ── Shared State trên window — truy cập từ mọi file ──────────
-window.AppState = { isAuto: false };
+window.AppState = { autoMode: 'off' };
 
 window.CMD_LABELS = {
   F:'FORWARD', B:'BACKWARD', L:'LEFT', R:'RIGHT',
@@ -11,38 +11,55 @@ window.CMD_LABELS = {
 };
 
 // ── Cache DOM elements dùng nhiều lần ────────────────────────
-const _btnAuto  = () => document.getElementById('btn-auto');
-const _autoLabel = () => document.getElementById('auto-label');
 const _dpadWrap  = () => document.getElementById('dpad-wrap');
 
 // ── Gửi lệnh điều khiển ──────────────────────────────────────
 function cmd(c) {
-  if (window.AppState.isAuto && 'FBLRS'.includes(c)) return;
+  if (window.AppState.autoMode !== 'off' && 'FBLRS'.includes(c)) return;
   fetch('/control/' + c).catch(() => window.setOffline?.());
   window.flashBtn?.('btn-' + c);
   window.updateLastCmd?.(c);
   window.appendLog?.(c);
 }
 
-// ── Toggle Auto Drive ─────────────────────────────────────────
-function toggleAuto() {
-  window.AppState.isAuto = !window.AppState.isAuto;
-  fetch('/auto/' + (window.AppState.isAuto ? 'on' : 'off'))
-    .catch(() => window.setOffline?.());
+// ── Set Auto Drive Mode ──────────────────────────────────────
+function setAutoMode(mode) {
+  if (!['off', 'cpp', 'ai'].includes(mode)) return;
+  
+  window.AppState.autoMode = mode;
+  fetch('/auto/' + mode).catch(() => window.setOffline?.());
 
-  const isAuto = window.AppState.isAuto;
-  _btnAuto()?.classList.toggle('active', isAuto);
+  // Cập nhật class active cho nút bấm
+  ['off', 'cpp', 'ai'].forEach(m => {
+    const btn = document.getElementById('btn-auto-' + m);
+    if (btn) btn.classList.toggle('active', m === mode);
+  });
+
+  // Làm mờ D-pad nếu ở chế độ tự động
+  const isAuto = (mode !== 'off');
   _dpadWrap()?.classList.toggle('dimmed', isAuto);
 
-  const lbl = _autoLabel();
-  if (lbl) lbl.textContent = isAuto ? 'TẮT TỰ LÁI' : 'BẬT TỰ LÁI';
+  // Ghi log trạng thái mới
+  let logText = 'MANUAL MODE';
+  let logColor = 'var(--green)';
+  if (mode === 'cpp') {
+    logText = 'AUTO DRIVE: NATIVE (CPP)';
+    logColor = 'var(--green)';
+  } else if (mode === 'ai') {
+    logText = 'AUTO DRIVE: AI AGENT (RUST)';
+    logColor = 'var(--amber)';
+  }
 
-  window.appendLogRaw?.(
-    isAuto ? 'AUTO DRIVE ON' : 'MANUAL MODE',
-    isAuto ? 'var(--amber)' : 'var(--green)'
-  );
-  window.updateLastCmd?.(isAuto ? 'AUTO' : 'MANUAL');
+  window.appendLogRaw?.(logText, logColor);
+  window.updateLastCmd?.(mode === 'off' ? 'MANUAL' : 'AUTO_' + mode.toUpperCase());
 }
 
-window.cmd        = cmd;
-window.toggleAuto = toggleAuto;
+function toggleAuto() {
+  const current = window.AppState.autoMode;
+  const next = (current === 'off') ? 'ai' : 'off';
+  setAutoMode(next);
+}
+
+window.cmd         = cmd;
+window.setAutoMode = setAutoMode;
+window.toggleAuto  = toggleAuto;

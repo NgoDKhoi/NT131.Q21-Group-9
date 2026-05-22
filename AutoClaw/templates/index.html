@@ -3,15 +3,15 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>ZeroClaw — Control Panel</title>
+  <title>AutoClaw — Control Panel</title>
   <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
 
 <header>
-  <div class="logo">ZERO<span>CLAW</span></div>
-  <div class="subtitle">AUTONOMOUS ROBOT — CONTROL PANEL v3.0</div>
+  <div class="logo">AUTO<span>CLAW</span></div>
+  <div class="subtitle">AUTONOMOUS ROBOT — POWERED BY ZEROCLAW v4.0</div>
 </header>
 
 <!-- Status -->
@@ -55,15 +55,27 @@
       <span id="cam-timestamp">--:--:--</span>
     </div>
   </div>
+  <!-- AI Scene Analysis Box -->
+  <div class="ai-analysis-box" id="ai-analysis-box">
+    <div class="ai-status">🤖 TRỢ LÝ AI: <span id="ai-desc">Đang chờ lệnh (✌ hoặc khẩu lệnh "AI phân tích")...</span></div>
+    <div class="ai-suggestion" id="ai-suggest-wrap" style="display:none">Gợi ý lái: <span id="ai-suggest-val">—</span></div>
+  </div>
 </div>
 
 <!-- Auto Drive -->
 <div class="card">
-  <div class="card-title">▸ AUTO DRIVE</div>
-  <button class="btn-auto" id="btn-auto" onclick="toggleAuto()">
-    <span class="auto-icon" id="auto-icon">⚙</span>
-    <span id="auto-label">BẬT TỰ LÁI</span>
-  </button>
+  <div class="card-title">▸ AUTO DRIVE MODE</div>
+  <div class="auto-row">
+    <button class="btn-auto-mode active" id="btn-auto-off" onclick="setAutoMode('off')">
+      🔴 OFF
+    </button>
+    <button class="btn-auto-mode" id="btn-auto-cpp" onclick="setAutoMode('cpp')">
+      ⚙ NATIVE (CPP)
+    </button>
+    <button class="btn-auto-mode" id="btn-auto-ai" onclick="setAutoMode('ai')">
+      🤖 AI AGENT (RUST)
+    </button>
+  </div>
 </div>
 
 <!-- Movement -->
@@ -98,7 +110,7 @@
   </div>
   <div class="keys-hint">
     Phím tắt: <kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd>
-    — Dừng: <kbd>X</kbd> — Auto: <kbd>P</kbd> — Voice: <kbd>V</kbd>
+    — Dừng: <kbd>X</kbd> — Auto: <kbd>P</kbd> — Voice: <kbd>V</kbd> — AI: <kbd>G</kbd>
   </div>
 </div>
 
@@ -128,6 +140,7 @@
       <div>"phải / rẽ phải"   → <span>RIGHT</span></div>
       <div>"dừng / stop"      → <span>STOP</span></div>
       <div>"nhìn trái/phải"   → <span>SERVO</span></div>
+      <div>"ai phân tích"     → <span>AI ANALYZE 🤖</span></div>
     </div>
   </div>
 </div>
@@ -149,7 +162,7 @@
       <div>👌 OK Sign       → <span>TIẾN</span></div>
       <div>✊ Nắm đấm       → <span>DỪNG</span></div>
       <div>☝ Chỉ lên        → <span>LÙI</span></div>
-      <div>✌ Chữ V          → <span>CHỤP ẢNH 📸</span></div>
+      <div>✌ Chữ V          → <span>AI PHÂN TÍCH 🤖</span></div>
       <div>👈 Ngón cái trái → <span>RẼ TRÁI</span></div>
       <div>👉 Ngón cái phải → <span>RẼ PHẢI</span></div>
       <div>🤟 I Love You    → <span>BẬT/TẮT TỰ LÁI</span></div>
@@ -165,7 +178,7 @@
   </div>
 </div>
 
-<footer>ZEROCLAW ROBOTICS · HCMC · 2025</footer>
+<footer>AUTOCLAW ROBOT · POWERED BY ZEROCLAW · HCMC · 2025</footer>
 
 <!-- Script load order quan trọng:
      1. api.js   — định nghĩa window.AppState, cmd(), toggleAuto()

@@ -85,14 +85,21 @@ async function pollStatus() {
     }
 
     // Đồng bộ auto state từ server khi reload trang
-    if (d.auto !== window.AppState?.isAuto) {
-      window.AppState.isAuto = d.auto;
-      const btn  = _el('btn-auto');
-      const lbl  = _el('auto-label');
+    const serverAutoMode = d.auto || 'off';
+    if (serverAutoMode !== window.AppState?.autoMode) {
+      window.AppState.autoMode = serverAutoMode;
+      ['off', 'cpp', 'ai'].forEach(m => {
+        const btn = _el('btn-auto-' + m);
+        if (btn) btn.classList.toggle('active', m === serverAutoMode);
+      });
       const dpad = _el('dpad-wrap');
-      btn?.classList.toggle('active', d.auto);
-      dpad?.classList.toggle('dimmed', d.auto);
-      if (lbl) lbl.textContent = d.auto ? 'TẮT TỰ LÁI' : 'BẬT TỰ LÁI';
+      dpad?.classList.toggle('dimmed', serverAutoMode !== 'off');
+    }
+
+    // Hiển thị log AI agent thời gian thực
+    if (d.ai_log && serverAutoMode === 'ai') {
+      const elAiDesc = _el('ai-desc');
+      if (elAiDesc) elAiDesc.textContent = d.ai_log;
     }
 
   } catch (e) {
@@ -107,18 +114,9 @@ document.addEventListener('visibilitychange', () => {
   if (!document.hidden) pollStatus(); // Resume ngay khi tab active lại
 });
 
-// ── Camera — MJPEG stream ─────────────────────────────────────
-// Flask serve /camera dưới dạng multipart/x-mixed-replace (MJPEG)
-// Browser tự xử lý streaming, KHÔNG cần setInterval đổi src.
-// Chỉ cần set src 1 lần khi load trang.
-// Nếu stream bị đứt → onerror tự reload sau 3 giây.
-if (elCamImg) {
-  elCamImg.onerror = () => {
-    setTimeout(() => {
-      elCamImg.src = '/camera?' + Date.now();
-    }, 3000);
-  };
-}
+// ── Camera Snapshot ───────────────────────────────────────────
+// Việc chụp ảnh từ camera Pi hiện tại dùng phương thức Snapshot-on-demand
+// được xử lý hoàn toàn trong hand_tracking.js thông qua endpoint /snapshot.
 
 // ── Keyboard shortcuts ────────────────────────────────────────
 const KEY_MAP = {
@@ -130,6 +128,7 @@ const KEY_MAP = {
   '1':'1', '2':'2', '3':'3',
   p:'AUTO', P:'AUTO',
   v:'VOICE', V:'VOICE',
+  g:'AI', G:'AI',
 };
 document.addEventListener('keydown', e => {
   if (e.repeat) return;
@@ -140,12 +139,39 @@ document.addEventListener('keydown', e => {
   e.preventDefault();
   if      (c === 'AUTO')  window.toggleAuto?.();
   else if (c === 'VOICE') window.toggleVoice?.();
+  else if (c === 'AI')    window.triggerAiAnalyze?.();
   else                    window.cmd?.(c);
 });
+
+let _suggestTimeout = null;
+
+function showAiSuggestion(cmd, desc) {
+  // Xóa highlight cũ ở tất cả các phím điều hướng
+  const buttons = ['btn-F', 'btn-B', 'btn-L', 'btn-R', 'btn-S'];
+  buttons.forEach(id => {
+    _el(id)?.classList.remove('highlight-suggest');
+  });
+
+  // Highlight phím đề xuất mới
+  const targetId = 'btn-' + cmd;
+  const btn = _el(targetId);
+  if (btn) {
+    btn.classList.add('highlight-suggest');
+
+    // Reset timeout cũ
+    if (_suggestTimeout) clearTimeout(_suggestTimeout);
+
+    // Tự tắt sau 5 giây
+    _suggestTimeout = setTimeout(() => {
+      btn.classList.remove('highlight-suggest');
+    }, 5000);
+  }
+}
 
 // ── Expose ra window ──────────────────────────────────────────
 Object.assign(window, {
   appendLogRaw, appendLog,
   flashBtn, updateLastCmd,
   setOnline, setOffline,
+  showAiSuggestion,
 });

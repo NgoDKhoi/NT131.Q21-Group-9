@@ -15,6 +15,9 @@ use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::Duration;
 
+mod gemini;
+mod agent;
+
 // ── Ngưỡng an toàn ─────────────────────────────────────────
 const SAFETY_DISTANCE_CM: f32 = 15.0;
 
@@ -32,6 +35,10 @@ pub struct ZeroClaw {
 
     // Cache mode: "MANUAL" | "AUTO"
     latest_mode: Arc<Mutex<String>>,
+
+    // Cờ dừng và join handle của ZeroClaw Rust Agent
+    agent_shutdown: Arc<std::sync::atomic::AtomicBool>,
+    agent_thread: Arc<Mutex<Option<thread::JoinHandle<()>>>>,
 }
 
 #[pymethods]
@@ -91,9 +98,8 @@ impl ZeroClaw {
                             *mode_ref.lock().unwrap() = "MANUAL".to_string();
 
                         } else if let Ok(dist) = trimmed.parse::<f32>() {
-                            // Chỉ chấp nhận khoảng cách hợp lệ (2–400 cm)
-                            // Lọc bỏ các giá trị rác hoặc out-of-range
-                            if (2.0..=400.0).contains(&dist) {
+                            // Chỉ chấp nhận khoảng cách hợp lệ (2–400 cm) hoặc giá trị đặc biệt 999.0 (thể hiện không có vật cản)
+                            if (2.0..=400.0).contains(&dist) || dist == 999.0 {
                                 *dist_ref.lock().unwrap() = dist;
                             }
                         }
@@ -111,10 +117,15 @@ impl ZeroClaw {
             }
         });
 
+        let agent_shutdown = Arc::new(std::sync::atomic::AtomicBool::new(false));
+        let agent_thread   = Arc::new(Mutex::new(None));
+
         Ok(ZeroClaw {
             port_writer: Arc::new(Mutex::new(writer)),
             latest_distance,
             latest_mode,
+            agent_shutdown,
+            agent_thread,
         })
     }
 
@@ -165,6 +176,61 @@ impl ZeroClaw {
     /// Shortcut để Flask check auto mode nhanh
     fn is_auto_mode(&self) -> PyResult<bool> {
         Ok(self.latest_mode.lock().unwrap().as_str() == "AUTO")
+    }
+
+    /// Gửi ảnh camera (base64) lên Gemini AI để phân tích vật cản và lấy gợi ý lái
+    fn analyze_scene(&self, image_base64: &str, api_key: &str) -> PyResult<String> {
+        let client = gemini::GeminiClient::new(api_key);
+        let dist = *self.latest_distance.lock().unwrap();
+        match client.analyze_scene(image_base64, dist) {
+            Ok(decision) => {
+                serde_json::to_string(&decision).map_err(|e| {
+                    PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(
+                        format!("Lỗi serialize JSON: {}", e),
+                    )
+                })
+            }
+            Err(e) => {
+                Err(PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(
+                    format!("Lỗi gọi Gemini: {}", e),
+                ))
+            }
+        }
+    }
+
+    /// Bắt đầu Agent tuần tra tự trị bằng Rust sử dụng framework ZeroClaw
+    fn start_agent(&self, api_key: String) -> PyResult<()> {
+        self.stop_agent()?;
+
+        self.agent_shutdown.store(false, std::sync::atomic::Ordering::Relaxed);
+        
+        let shutdown_flag = Arc::clone(&self.agent_shutdown);
+        let port_writer = Arc::clone(&self.port_writer);
+        let latest_distance = Arc::clone(&self.latest_distance);
+
+        let handle = thread::spawn(move || {
+            let rt = tokio::runtime::Runtime::new().unwrap();
+            rt.block_on(async {
+                if let Err(e) = agent::run_agent_loop(api_key, port_writer, latest_distance, shutdown_flag).await {
+                    eprintln!("🚨 [ZeroClaw Agent] Lỗi trong vòng lặp Agent: {:?}", e);
+                }
+            });
+        });
+
+        *self.agent_thread.lock().unwrap() = Some(handle);
+        println!("🤖 [ZeroClaw Core] Đã khởi chạy Agent chạy ngầm trong Rust.");
+        Ok(())
+    }
+
+    /// Dừng Agent tuần tra tự trị
+    fn stop_agent(&self) -> PyResult<()> {
+        self.agent_shutdown.store(true, std::sync::atomic::Ordering::Relaxed);
+        if let Some(handle) = self.agent_thread.lock().unwrap().take() {
+            let _ = handle.join();
+        }
+        self.agent_shutdown.store(false, std::sync::atomic::Ordering::Relaxed);
+        println!("🤖 [ZeroClaw Core] Đã dừng Agent chạy ngầm trong Rust.");
+        Ok(())
     }
 }
 

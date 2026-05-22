@@ -16,10 +16,15 @@ flask-cors==4.0.0
 python-dotenv==1.0.1
 
 # Computer Vision (camera streaming server-side)
-opencv-python-headless==4.8.1.78
+opencv-python-headless>=4.10.0
+numpy>=1.26.0
+requests>=2.31.0
 
 # Rust-Python bridge build tool
 maturin==1.4.0
 
 # Ngrok tunnel (HTTPS cho Voice API + remote access)
 pyngrok==7.2.0
+
+# Telegram Bot integration
+pyTelegramBotAPI==4.21.0

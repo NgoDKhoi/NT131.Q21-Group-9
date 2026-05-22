@@ -35,6 +35,7 @@
     { kw: ['quay phải', 'rẽ phải', 'sang phải'],    fn: () => window.cmd('R') },
     { kw: ['dừng', 'đứng lại', 'stop', 'dừng lại'], fn: () => window.cmd('S') },
     { kw: ['tự lái', 'tự động'],                    fn: () => window.toggleAuto() },
+    { kw: ['ai phân tích', 'ai xem trước mặt', 'quét vật cản', 'phân tích'], fn: () => window.triggerAiAnalyze?.() },
   ];
 
   // ── Xử lý transcript ──────────────────────────────────────

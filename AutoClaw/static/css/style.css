@@ -493,43 +493,56 @@ kbd {
 }
 .voice-map span { color: var(--text); }
 
-.btn-auto {
+.auto-row {
+  display: flex;
+  gap: 10px;
   width: 100%;
-  height: 60px;
-  border-radius: 6px;
-  border: 1px solid var(--border);
+}
+.btn-auto-mode {
+  flex: 1;
+  height: 52px;
   background: var(--bg);
-  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--muted);
   font-family: 'Orbitron', sans-serif;
-  font-size: 13px;
-  font-weight: 900;
-  letter-spacing: 3px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  gap: 8px;
   transition: all .2s;
   user-select: none;
   -webkit-tap-highlight-color: transparent;
 }
-.btn-auto .auto-icon { font-size: 22px; }
-.btn-auto:hover { border-color: var(--amber); color: var(--amber); }
-.btn-auto.active {
-  background: #1a1200;
+.btn-auto-mode:hover {
+  border-color: var(--text);
+  color: var(--text);
+}
+.btn-auto-mode.active {
+  color: var(--bg);
+  font-weight: 900;
+}
+#btn-auto-off.active {
+  background: var(--red);
+  border-color: var(--red);
+  color: #fff;
+  box-shadow: var(--glow-r);
+}
+#btn-auto-cpp.active {
+  background: var(--green);
+  border-color: var(--green);
+  color: #000;
+  box-shadow: var(--glow-g);
+}
+#btn-auto-ai.active {
+  background: var(--amber);
   border-color: var(--amber);
-  color: var(--amber);
-  box-shadow: var(--glow-a), inset 0 0 20px #ffb80011;
-  animation: autoGlow 2s infinite;
-}
-.btn-auto.active .auto-icon { animation: spin 3s linear infinite; }
-@keyframes autoGlow {
-  0%,100% { box-shadow: var(--glow-a); }
-  50%      { box-shadow: 0 0 24px #ffb800aa; }
-}
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to   { transform: rotate(360deg); }
+  color: #000;
+  box-shadow: var(--glow-a);
 }
 
 /* Dim d-pad buttons when auto is on */
@@ -567,4 +580,87 @@ kbd {
   font-size: 11px;
   letter-spacing: 2px;
   font-family: 'Share Tech Mono', monospace;
+}
+
+/* ── AI Analysis Box ── */
+.ai-analysis-box {
+  margin-top: 10px;
+  background: rgba(13, 21, 32, 0.85);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 10px;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 11px;
+}
+.ai-analysis-box::before {
+  content: '';
+  display: block;
+  width: 100%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--blue), transparent);
+  margin-bottom: 8px;
+  opacity: .5;
+}
+.ai-status {
+  color: var(--blue);
+  text-shadow: 0 0 8px rgba(0, 207, 255, 0.4);
+  line-height: 1.4;
+}
+.ai-status span {
+  color: var(--text);
+}
+.ai-suggestion {
+  margin-top: 6px;
+  font-weight: bold;
+  color: var(--amber);
+}
+.ai-suggestion span {
+  display: inline-block;
+  background: rgba(255, 184, 0, 0.15);
+  border: 1px solid var(--amber);
+  border-radius: 3px;
+  padding: 1px 6px;
+  margin-left: 5px;
+  text-shadow: var(--glow-a);
+}
+
+/* ── Radar Scanlines Animation ── */
+@keyframes radarScan {
+  0% { top: 0%; opacity: 0; }
+  10% { opacity: 0.8; }
+  90% { opacity: 0.8; }
+  100% { top: 100%; opacity: 0; }
+}
+.camera-wrap.scanning::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: linear-gradient(to bottom, transparent, var(--blue), transparent);
+  box-shadow: 0 0 10px var(--blue);
+  animation: radarScan 1.5s linear infinite;
+  pointer-events: none;
+}
+.camera-wrap.scanning img {
+  filter: brightness(0.6) contrast(1.2);
+}
+
+/* ── D-Pad Highlight Animation ── */
+@keyframes suggestGlow {
+  0%, 100% {
+    border-color: var(--blue);
+    color: var(--blue);
+    box-shadow: 0 0 8px rgba(0, 207, 255, 0.3);
+  }
+  50% {
+    border-color: #ffffff;
+    color: #ffffff;
+    box-shadow: 0 0 20px rgba(0, 207, 255, 0.8), inset 0 0 10px rgba(0, 207, 255, 0.3);
+    transform: scale(1.03);
+  }
+}
+.btn.highlight-suggest {
+  animation: suggestGlow 1s ease-in-out infinite;
+  z-index: 10;
 }

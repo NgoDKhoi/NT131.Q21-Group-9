@@ -1,238 +1,304 @@
 # AutoClaw 🤖
 
-> **Autonomous Edge AI Robot** — Điều khiển đa phương thức: tay, giọng nói, cử chỉ tay và tự lái.  
-> Đồ án môn học · Khoa Mạng Máy Tính · Đại học Công nghệ Thông tin UIT
+> **Autonomous Edge AI Robot** — Xe tự hành thông minh tích hợp điều khiển đa phương thức: tay (D-pad), giọng nói (tiếng Việt), cử chỉ bàn tay (AI MediaPipe), thuật toán tự động tránh vật cản và giám sát/điều khiển từ xa qua **Telegram Bot**.
+>
+> 🏫 Đồ án môn học · Khoa Mạng Máy Tính & Truyền Thông · Đại học Công nghệ Thông tin UIT
 
 ---
 
-## Giới thiệu
+## 📖 Giới thiệu dự án
 
-AutoClaw là robot tự hành được xây dựng trên nền tảng **Raspberry Pi 4** và **Arduino Uno R3**, với lõi an toàn viết bằng **Rust** (qua PyO3). Hệ thống hỗ trợ 4 phương thức điều khiển đồng thời:
+AutoClaw là một dự án nghiên cứu và phát triển xe robot tự hành ứng dụng trí tuệ nhân tạo biên (Edge AI) trên nền tảng **Raspberry Pi 4** và **Arduino Uno R3**. Hệ thống hỗ trợ 4 phương thức tương tác độc lập và đồng thời:
 
-- 🕹️ **Thủ công** — D-pad trên web dashboard
-- 🎙️ **Giọng nói** — Web Speech API tiếng Việt
-- ✋ **Cử chỉ tay** — MediaPipe Hand Gesture (xử lý hoàn toàn trên client)
-- 🤖 **Tự lái** — State machine né vật cản với HC-SR04
-
----
-
-## Tính năng nổi bật
-
-| Tính năng | Mô tả |
-|-----------|-------|
-| **Safety Reflex** | Rust core tự động dừng xe khi phát hiện vật cản < 15 cm, bất kể lệnh nào được gửi |
-| **Voice Control** | Nhận diện 9 lệnh tiếng Việt, ưu tiên camera servo trước di chuyển để tránh nhầm lẫn |
-| **Hand Gesture** | 7 cử chỉ, geometry-based (không phụ thuộc 100% vào ML model), cooldown riêng từng cử chỉ |
-| **Snapshot Camera** | Chụp ảnh từ Pi Camera khi giơ cử chỉ ✌ — không stream liên tục, tiết kiệm bandwidth |
-| **Auto Drive** | Non-blocking state machine (millis-based), nhận lệnh dừng ngay lập tức |
-| **Remote Access** | Ngrok HTTPS tunnel — hỗ trợ Web Speech API từ xa |
+*   🕹️ **Thủ công** — Điều khiển qua nút bấm D-pad trên web dashboard.
+*   🎙️ **Giọng nói** — Điều khiển rẽ hướng, di chuyển và xoay góc camera bằng khẩu lệnh tiếng Việt (sử dụng Web Speech API).
+*   ✋ **Cử chỉ tay** — Nhận diện cử chỉ bàn tay bằng mô hình AI MediaPipe (xử lý trực tiếp trên GPU Client qua trình duyệt).
+*   🤖 **Tự lái** — Thuật toán tránh vật cản chủ động sử dụng cảm biến siêu âm HC-SR04 kết hợp động cơ Servo SG90 để quét 180 độ.
 
 ---
 
-## Cấu trúc dự án
+## ✨ Tính năng nổi bật
+
+*   🛡️ **Safety Reflex (Phanh khẩn cấp)**: Lõi an toàn bằng **Rust** tự động kiểm tra khoảng cách và chặn các lệnh Tiến (`F`), ép dừng xe ngay lập tức khi phát hiện vật cản $< 15\text{ cm}$ để tránh va chạm.
+*   🤖 **Lõi Tự Trị ZeroClaw Agent**: Tích hợp framework **ZeroClaw** chạy bằng vòng lặp Tokio không đồng bộ (Rust). Khi kích hoạt chế độ lái tự động AI (`/auto/ai`), server Flask chuyển quyền quyết định hoàn toàn cho Rust Agent để gọi các công cụ AI (Tools): đo khoảng cách, chụp ảnh snapshot và đề xuất hướng lái tối ưu tránh vật cản.
+*   📸 **Snapshot Camera**: Tiết kiệm 99% băng thông của Raspberry Pi bằng cách chụp và gửi ảnh camera tĩnh khi phát hiện cử chỉ Victory (✌), thay vì truyền phát (stream) video MJPEG liên tục gây nghẽn mạng.
+*   ⏱️ **Non-blocking State Machine**: Hệ thống lái tự động trên Arduino sử dụng biến mốc thời gian `millis()` thay cho hàm chặn `delay()`, giúp xe luôn sẵn sàng nhận lệnh ngắt thủ công từ người dùng ngay tức khắc.
+*   ⚡ **Bộ lọc chống nhiễu cảm biến**: Thuật toán trên Arduino tự động lọc nhiễu tín hiệu siêu âm, xe chỉ phản ứng dừng khi có vật cản xuất hiện trong ít nhất 2 chu kỳ đo liên tiếp (~100ms).
+
+---
+
+## 🛠️ Phần cứng & Sơ đồ đấu nối Arduino
+
+### Linh kiện sử dụng
+1.  **Raspberry Pi 4 (8GB)**: Đóng vai trò máy chủ Flask Web Server, xử lý camera Snapshot và điều phối lệnh.
+2.  **Arduino Uno R3**: Vi xử lý cấp thấp chịu trách nhiệm đọc cảm biến, quét servo và điều khiển trực tiếp động cơ.
+3.  **Module L298N**: Mạch cầu H để điều khiển tốc độ và hướng của 4 động cơ DC.
+4.  **Cảm biến siêu âm HC-SR04**: Đo khoảng cách tới chướng ngại vật trước mặt.
+5.  **Động cơ Servo SG90**: Xoay cảm biến siêu âm và camera sang Trái/Phải/Giữa.
+6.  **Raspberry Pi Camera Module (hoặc USB Webcam)**: Ghi hình môi trường thực tế trước xe để gửi dữ liệu về cho Gemini Vision AI phân tích.
+
+### Sơ đồ chân cắm Arduino
+```
+Motor Trái   : ENA = chân 5  | IN1 = chân 6  | IN2 = chân 7
+Motor Phải   : ENB = chân 10 | IN3 = chân 8  | IN4 = chân 9
+Cảm biến âm  : TRIG = chân 12 | ECHO = chân 13
+Động cơ Servo: PIN = chân 11
+Giao tiếp    : Cổng USB Serial (9600 baud, chân TX=1, RX=0)
+```
+
+---
+
+## 📂 Cấu trúc thư mục
 
 ```
 AutoClaw/
-├── app.py                  # Flask backend (Python 3.13)
-├── requirements.txt        # Python dependencies
-├── .env                    # Config & secrets
-├── ZeroClaw.ino            # Arduino firmware (C++)
+├── app.py                  # Flask Web Server (Python)
+├── requirements.txt        # Các thư viện Python cần cài đặt
+├── .env                    # Lưu trữ cấu hình cổng COM/Serial, Camera Index, Port Web, Key bảo mật, Token API và Telegram Bot.
+├── AutoClaw.cpp            # Firmware Arduino Uno (C++)
+├── zeroclaw_core.py        # Mock implementation của ZeroClaw Core khi chạy Localhost giả lập
 │
-├── core/                   # Rust Safety Engine
-│   ├── Cargo.toml
+├── core/                   # Lõi an toàn Rust Safety Engine & ZeroClaw Agent
+│   ├── Cargo.toml          # Khai báo thư viện phụ thuộc của Rust (bao gồm thư viện zeroclaw)
 │   └── src/
-│       └── lib.rs          # PyO3 · ZeroClaw struct · Background reader thread
+│       ├── lib.rs          # PyO3 Bindings, reader thread đọc Serial, APIs start_agent/stop_agent
+│       ├── gemini.rs       # Module Vision AI gọi API Gemini 2.0
+│       └── agent.rs        # Loop agent tuần tra tự trị (Tokio loop, chứa ControlCarTool, GetDistanceTool, CaptureSnapshotTool)
 │
 ├── templates/
-│   └── index.html          # Dashboard UI (Jinja2)
+│   └── index.html          # Giao diện điều khiển Web Dashboard (HTML)
 │
 └── static/
     ├── css/
-    │   └── style.css       # Cyberpunk theme
+    │   └── style.css       # CSS thiết kế giao diện Cyberpunk neon retro
     └── js/
-        ├── api.js          # cmd(), toggleAuto(), AppState
-        ├── ui.js           # Polling, keyboard shortcuts, DOM updates
-        ├── voice.js        # Web Speech API (vi-VN)
-        └── hand_tracking.js # MediaPipe ESM module
+        ├── api.js          # Khai báo namespace AppState và hàm gửi API lệnh
+        ├── ui.js           # Polling cập nhật UI, phím tắt keyboard, hiển thị log
+        ├── voice.js        # Nhận dạng giọng nói Web Speech API tiếng Việt
+        └── hand_tracking.js# AI MediaPipe nhận diện cử chỉ bàn tay qua webcam
 ```
 
 ---
 
-## Hardware
+## 🚀 Hướng dẫn cài đặt và vận hành
 
-| Linh kiện | Vai trò |
-|-----------|---------|
-| Raspberry Pi 4 (8GB) | Web server, camera, AI processing |
-| Arduino Uno R3 | Motor control, sensor reading |
-| L298N Motor Driver | Điều khiển 4 động cơ DC |
-| HC-SR04 | Cảm biến siêu âm đo khoảng cách |
-| SG90 Servo | Xoay camera trái/phải/giữa |
-| Pi Camera | Chụp snapshot khi nhận cử chỉ ✌ |
-
-### Sơ đồ chân Arduino
-
-```
-Motor Left  : ENA=5  IN1=6  IN2=7
-Motor Right : ENB=10 IN3=8  IN4=9
-Ultrasonic  : TRIG=12  ECHO=13
-Servo       : PIN=11
-Serial      : TX=1  RX=0  (9600 baud)
-```
+### Yêu cầu hệ thống
+*   **Hệ điều hành**: Raspberry Pi OS (Debian 12 Bookworm hoặc mới hơn) trên Pi 4 / Windows 10/11 trên PC.
+*   **Python**: Phiên bản 3.10 đến 3.13.
+*   **Rust & Cargo**: Để biên dịch lõi an toàn `zeroclaw_core`.
+*   **Arduino IDE**: Để nạp chương trình lên Arduino Uno R3.
 
 ---
 
-## Cài đặt
+### 💻 Hướng dẫn 1: Triển khai nhanh trên Windows (Localhost - Giả lập)
 
-### Yêu cầu
+Để chạy thử nghiệm giao diện web và thuật toán trên máy tính cá nhân (sử dụng camera webcam giả lập và serial giả lập):
 
-- Python 3.13+
-- Rust + Cargo ([rustup.rs](https://rustup.rs))
-- Arduino IDE hoặc CLI
+1. **Tải mã nguồn**:
+   ```bash
+   git clone https://github.com/NgoDKhoi/NT131.Q21-Group-9.git
+   cd NT131.Q21-Group-9/AutoClaw
+   ```
+2. **Cài đặt thư viện Python**:
+   ```bash
+   pip install -r requirements.txt
+   ```
+3. **Biên dịch Rust Core** (Yêu cầu đã cài đặt Rust từ trước):
+   ```bash
+   cd core
+   maturin develop --release
+   cd ..
+   ```
+   *Mẹo: Nếu chưa có Rust trên Windows, backend sẽ tự động chuyển sang chế độ Mock Core (`zeroclaw_core.py`) để kiểm thử UI mà không bị crash.*
+4. **Tạo cấu hình môi trường**:
+   Tạo file `.env` với nội dung cấu hình (sử dụng camera mặc định `CAMERA_INDEX=0` và cổng serial mặc định `/dev/ttyACM0` hoặc điều chỉnh cổng Serial tương ứng với thiết bị của bạn):
+   ```env
+   SERIAL_PORT=/dev/ttyACM0
+   CAMERA_INDEX=0
+   GEMINI_API_KEY=YOUR_GEMINI_API_KEY_HERE
+   TELEGRAM_BOT_TOKEN=YOUR_TELEGRAM_BOT_TOKEN_HERE
+   TELEGRAM_CHAT_ID=YOUR_TELEGRAM_CHAT_ID_HERE
+   ```
+5. **Chạy server**:
+   ```bash
+   python app.py
+   ```
+   Truy cập `http://localhost:5000` trên trình duyệt.
 
-### 1. Clone và cài Python dependencies
+---
 
+### 🍓 Hướng dẫn 2: Triển khai thực tế trên Raspberry Pi 4
+
+Khi cài đặt trên Raspberry Pi OS, hãy làm theo các bước chuẩn sau để tránh lỗi thư viện liên kết động (`.so`) của OpenCV/NumPy và quy định chặn cài thư viện toàn cục (`externally-managed-environment`) của Debian:
+
+#### Bước 1: Cài đặt các thư viện hệ thống cần thiết qua APT
+SSH vào Raspberry Pi 4 và chạy lệnh cài đặt các package phát triển:
 ```bash
-git clone https://github.com/your-repo/autoclaw.git
-cd autoclaw
+sudo apt update
+sudo apt install -y build-essential libatlas-base-dev libjpeg-dev libtiff5-dev libpng-dev
+```
+
+#### Bước 2: Tải mã nguồn và thiết lập Môi trường ảo Python (venv)
+```bash
+git clone https://github.com/NgoDKhoi/NT131.Q21-Group-9.git
+cd NT131.Q21-Group-9/AutoClaw
+
+# Khởi tạo và kích hoạt môi trường ảo
+python3 -m venv venv
+source venv/bin/activate
+```
+
+#### Bước 3: Cài đặt các dependencies Python
+```bash
+pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-### 2. Build Rust Core (bắt buộc)
+#### Bước 4: Cài đặt Rust Compiler và biên dịch Rust Core
+1. Cài đặt toolchain Rust trên Pi 4:
+   ```bash
+   curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+   ```
+   *Chọn tùy chọn `1` (mặc định) và đợi quá trình cài đặt hoàn tất.*
+2. Cập nhật biến môi trường cho terminal hiện tại:
+   ```bash
+   source $HOME/.cargo/env
+   ```
+3. Biên dịch lõi an toàn `zeroclaw_core` bằng Maturin:
+   ```bash
+   cd core
+   maturin develop --release
+   cd ..
+   ```
 
+#### Bước 5: Cấu hình cổng kết nối và môi trường trên Pi
+Tạo file `.env` chứa cổng kết nối Serial (thường là `/dev/ttyACM0` cho Arduino Uno R3) và camera mặc định (`CAMERA_INDEX=0`):
 ```bash
-cd core
-maturin develop          # development
-# hoặc
-maturin develop --release  # production (nhanh hơn ~3x)
-cd ..
+echo -e "SERIAL_PORT=/dev/ttyACM0\nCAMERA_INDEX=0\nGEMINI_API_KEY=YOUR_GEMINI_API_KEY_HERE\nTELEGRAM_BOT_TOKEN=YOUR_TELEGRAM_BOT_TOKEN_HERE\nTELEGRAM_CHAT_ID=YOUR_TELEGRAM_CHAT_ID_HERE" > .env
 ```
 
-> ⚠️ Nếu chưa có `maturin`: `pip install maturin`
+#### Bước 6: Nạp firmware cho Arduino Uno R3
+1. Mở file [AutoClaw.cpp](AutoClaw.cpp) bằng Arduino IDE (trên máy tính cá nhân).
+2. **Quan trọng**: Rút dây kết nối RX/TX (chân 0, 1) trên Arduino ra trước khi nạp để tránh lỗi xung đột cổng Serial.
+3. Chọn board mạch **Arduino Uno** và cổng COM tương ứng, tiến hành nạp chương trình (Upload). Cắm lại dây RX/TX sau khi nạp thành công.
 
-### 3. Cấu hình `.env`
-
-```bash
-cp .env.example .env
-# Chỉnh sửa:
-# SERIAL_PORT=/dev/ttyACM0
-# FLASK_PORT=5000
-# NGROK_AUTHTOKEN=your_token_here
-```
-
-### 4. Nạp firmware lên Arduino
-
-Mở `ZeroClaw.ino` bằng Arduino IDE và upload lên Arduino Uno R3.
-
-> ⚠️ Rút dây TX/RX (pin 0, 1) trước khi upload, cắm lại sau khi xong.
-
-### 5. Chạy server
-
+#### Bước 7: Khởi chạy và vận hành
+Kích hoạt máy chủ điều khiển trên Pi:
 ```bash
 python app.py
 ```
-
-Mở trình duyệt: `http://<IP_Raspberry_Pi>:5000`
-
----
-
-## Remote Access (Ngrok)
-
-Web Speech API yêu cầu HTTPS. Dùng Ngrok để tạo tunnel:
-
-```bash
-ngrok http 5000
-# hoặc với static domain:
-ngrok http --domain=your-domain.ngrok-free.app 5000
-```
-
-Hoặc nếu dùng HTTP local, bật trong Chrome:
-
-```
-chrome://flags → "Insecure origins treated as secure"
-→ Thêm: http://<IP_Pi>:5000
-```
+*   Server sẽ lắng nghe tại cổng `5000`. Để truy cập từ điện thoại/máy tính khác trong mạng LAN, mở trình duyệt và truy cập IP của Pi: `http://<IP_RASPBERRY_PI>:5000`.
+*   *Lưu ý: Để sử dụng các tính năng Camera tay và Nhận diện giọng nói từ xa, hãy xem thêm mục **Cấu hình Ngrok để truy cập qua HTTPS** ở phía dưới.*
 
 ---
 
-## Điều khiển
+## 🎮 Hướng dẫn điều khiển
 
-### Phím tắt bàn phím
+### 1. Phím tắt bàn phím
+*   `W` hoặc `↑`: Đi tiến
+*   `S` hoặc `↓`: Đi lùi
+*   `A` hoặc `←`: Rẽ trái
+*   `D` hoặc `→`: Rẽ phải
+*   `X` hoặc `Phím Cách (Space)`: Dừng xe khẩn cấp
+*   `P`: Bật / Tắt chế độ tự lái (Auto Drive)
+*   `V`: Bật / Tắt nhận diện giọng nói
+*   `G`: Kích hoạt Trợ lý AI Phân tích (Gemini Vision) mô tả cảnh vật và gợi ý hướng rẽ nhấp nháy trên nút điều hướng
+*   `1` / `2` / `3`: Xoay camera (Trái / Phải / Giữa)
 
-| Phím | Lệnh |
-|------|------|
-| `W` / `↑` | Tiến |
-| `S` / `↓` | Lùi |
-| `A` / `←` | Rẽ trái |
-| `D` / `→` | Rẽ phải |
-| `X` / `Space` | Dừng |
-| `P` | Bật/tắt tự lái |
-| `V` | Bật/tắt nhận diện giọng nói |
-| `1` `2` `3` | Servo: Trái / Phải / Giữa |
+### 2. Khẩu lệnh giọng nói (Tiếng Việt)
+*   *"tiến" / "đi thẳng" / "tới"* $\rightarrow$ Tiến
+*   *"lùi" / "xuống"* $\rightarrow$ Lùi
+*   *"rẽ trái" / "quay trái"* $\rightarrow$ Rẽ trái
+*   *"rẽ phải" / "quay phải"* $\rightarrow$ Rẽ phải
+*   *"dừng" / "đứng lại" / "stop"* $\rightarrow$ Dừng xe
+*   *"nhìn trái" / "nhìn phải" / "nhìn thẳng"* $\rightarrow$ Xoay camera tương ứng
+*   *"tự lái" / "tự động"* $\rightarrow$ Bật/Tắt chế độ tự lái
+*   *"ai phân tích" / "ai xem trước mặt" / "quét vật cản"* $\rightarrow$ Gọi trợ lý AI phân tích bằng camera xe và gợi ý hướng đi
 
-### Cử chỉ tay (MediaPipe)
-
-| Cử chỉ | Lệnh |
-|--------|------|
-| 👌 OK Sign | Tiến |
-| ✊ Nắm đấm | Dừng |
-| ☝ Chỉ lên | Lùi |
-| ✌ Chữ V | Chụp ảnh Pi Camera |
-| 👈 Ngón cái trái | Rẽ trái |
-| 👉 Ngón cái phải | Rẽ phải |
-| 🤟 I Love You | Bật/tắt tự lái |
-
-### Lệnh giọng nói (vi-VN)
-
-```
-"tiến" / "đi thẳng" / "tới"     → Tiến
-"lùi" / "xuống"                  → Lùi
-"rẽ trái" / "quay trái"          → Rẽ trái
-"rẽ phải" / "quay phải"          → Rẽ phải
-"dừng" / "đứng lại" / "stop"     → Dừng
-"nhìn trái" / "nhìn sang trái"   → Servo trái
-"nhìn phải" / "nhìn sang phải"   → Servo phải
-"nhìn thẳng" / "nhìn giữa"       → Servo giữa
-"tự lái" / "tự động"             → Toggle Auto Drive
-```
+### 3. Cử chỉ bàn tay (MediaPipe)
+*   👌 **OK Sign**: Đi tiến
+*   ✊ **Closed Fist (Nắm đấm)**: Dừng lại
+*   ☝ **Pointing Up (Ngón trỏ chỉ lên)**: Đi lùi
+*   👈 **Thumb Left (Ngón cái trái)**: Rẽ trái
+*   👉 **Thumb Right (Ngón cái phải)**: Rẽ phải
+*   🤟 **I Love You**: Bật/Tắt tự lái
+*   ✌ **Victory (Chữ V)**: Gọi trợ lý AI chụp ảnh, mô tả vật cản bằng tiếng Việt (dưới 15 từ) và đề xuất hướng di chuyển nhấp nháy trên giao diện
+*   *Lưu ý: Không dùng MJPEG stream liên tục mà chỉ gửi 1 ảnh khi có cử chỉ hoặc khẩu lệnh để tiết kiệm tối đa token.*
 
 ---
 
-## API Endpoints
+## 🌐 Các API Endpoints của Flask Server
 
-| Method | Endpoint | Mô tả |
-|--------|----------|-------|
-| `GET` | `/` | Dashboard UI |
-| `GET` | `/control/<cmd>` | Gửi lệnh (`F B L R S 1 2 3`) |
-| `GET` | `/auto/<state>` | Bật/tắt auto (`on` / `off`) |
-| `GET` | `/status` | Distance (cm) + auto mode state |
-| `GET` | `/snapshot` | Chụp 1 frame từ Pi Camera |
+Flask Web Server cung cấp các API RESTful sau để frontend hoặc các ứng dụng bên thứ ba giao tiếp và điều khiển robot:
 
----
-
-## Troubleshooting
-
-**Arduino không kết nối được:**
-```bash
-ls /dev/ttyACM*      # Tìm đúng port
-sudo usermod -aG dialout $USER  # Cấp quyền
-```
-
-**Rust Core không build được:**
-```bash
-rustup update
-pip install maturin --upgrade
-cd core && maturin develop
-```
-
-**Voice API lỗi "not-allowed":**  
-→ Dùng HTTPS (Ngrok) hoặc bật `chrome://flags` như hướng dẫn ở trên.
-
-**Khoảng cách hiển thị `---`:**  
-→ Kiểm tra dây TRIG (pin 12) và ECHO (pin 13) của HC-SR04.
-
+| Endpoint | Phương thức | Tham số | Mô tả | Định dạng phản hồi |
+| :--- | :--- | :--- | :--- | :--- |
+| `/` | `GET` | Không | Trả về trang Web Dashboard chính. | HTML |
+| `/control/<cmd>` | `GET` | `cmd`: `F` (Tiến), `B` (Lùi), `L` (Trái), `R` (Phải), `S` (Dừng), `1` (Xoay servo trái), `2` (Xoay servo phải), `3` (Xoay servo giữa) | Gửi lệnh di chuyển hoặc điều khiển góc quay servo camera xuống Arduino. *Lưu ý: Lệnh `F` sẽ bị bộ lọc Safety Reflex chặn và chuyển thành `S` nếu khoảng cách vật cản < 15cm.* | `{"status": "success", "command": cmd}` |
+| `/auto/<state>` | `GET` | `state`: `off` (Tắt tự lái), `cpp` (Tự lái tránh vật cản C++ trên Arduino), `ai` (AI Agent tự lái sử dụng Gemini Vision) | Thiết lập chế độ lái tự động cho robot. Khi chuyển sang `ai`, Flask sẽ kích hoạt ZeroClaw Agent chạy bằng Rust (gọi `robot.start_agent(api_key)`), chạy ngầm một vòng lặp quyết định Tokio. Khi tắt hoặc đổi chế độ, Flask sẽ gọi `robot.stop_agent()`. | `{"status": "success", "mode": state}` |
+| `/status` | `GET` | Không | Polling thông tin trạng thái xe (khoảng cách hiện tại, chế độ tự lái và log phân tích của AI). Được gọi bởi frontend mỗi 500ms. | `{"distance": "25.4" (hoặc "---"), "auto": "off"/"cpp"/"ai", "ai_log": "..."}` |
+| `/snapshot` | `GET` | Không | Chụp 1 khung hình JPEG tĩnh từ camera Pi trên xe theo yêu cầu. Tự động trả về ảnh giả lập Cyberpunk nếu không kết nối camera. | Ảnh JPEG (mimetype: `image/jpeg`) |
+| `/ai_analyze` | `GET` | Không | Chụp ảnh từ camera, mã hóa Base64 và gửi lên Rust Core để phân tích vật cản và lấy gợi ý hướng đi bằng Gemini API. | `{"status": "success", "image": "data:image/jpeg;base64,...", "description": "...", "command": "..."}` |
 
 ---
 
-## License
+## 🤖 Telegram Bot — Giám sát & Điều khiển từ xa
 
-MIT License — Xem [LICENSE](LICENSE) để biết thêm.
+AutoClaw tích hợp sẵn **Telegram Bot** cho phép bạn giám sát và điều khiển xe robot từ bất cứ đâu qua ứng dụng Telegram trên điện thoại.
+
+### Thiết lập Telegram Bot:
+
+1. **Tạo Bot**: Mở Telegram, tìm [@BotFather](https://t.me/BotFather), gửi lệnh `/newbot` và làm theo hướng dẫn. Sao chép **Bot Token** được cung cấp.
+2. **Lấy Chat ID**: Gửi tin nhắn bất kỳ cho bot, sau đó truy cập `https://api.telegram.org/bot<TOKEN>/getUpdates` để lấy `chat.id` của bạn.
+3. **Cấu hình `.env`**:
+   ```env
+   TELEGRAM_BOT_TOKEN=<Bot Token từ BotFather>
+   TELEGRAM_CHAT_ID=<Chat ID của bạn>
+   ```
+4. **Khởi động lại server** (`python app.py`). Bot sẽ tự động chạy ngầm.
+
+### Các lệnh Telegram Bot:
+
+| Lệnh | Mô tả | Yêu cầu Chat ID |
+| :--- | :--- | :---: |
+| `/start` hoặc `/help` | Hiển thị hướng dẫn sử dụng | Không |
+| `/status` | Xem khoảng cách cảm biến và chế độ lái hiện tại | Không |
+| `/snapshot` | Chụp ảnh thời gian thực từ camera xe | Không |
+| `/control <F/B/L/R/S>` | Di chuyển xe thủ công (qua Safety Reflex) | **Có** |
+| `/auto <off/cpp/ai>` | Chuyển chế độ lái tự động | **Có** |
+
+> [!NOTE]
+> **Bảo mật**: Nếu đã cấu hình `TELEGRAM_CHAT_ID`, chỉ tài khoản Telegram có Chat ID trùng khớp mới được phép sử dụng lệnh điều khiển (`/control`, `/auto`). Các lệnh xem trạng thái (`/status`, `/snapshot`) vẫn hoạt động công khai nếu không cấu hình Chat ID.
+
+> [!WARNING]
+> Nếu `TELEGRAM_BOT_TOKEN` chưa được cấu hình hoặc giữ giá trị mặc định placeholder, bot sẽ tự động bỏ qua mà không làm ảnh hưởng tới Flask server.
+
+---
+
+## 🔒 Cấu hình Ngrok để truy cập từ xa qua HTTPS
+
+> [!IMPORTANT]
+> Trình duyệt Chrome và Edge áp dụng chính sách bảo mật nghiêm ngặt đối với **Web Speech API** (Nhận diện giọng nói) và **Camera Webcam** (Nhận diện cử chỉ tay). Các API này **chỉ hoạt động** trên `localhost` hoặc kết nối bảo mật **HTTPS**.
+> Khi triển khai dự án trên Raspberry Pi trong mạng LAN, việc truy cập bằng IP của Pi (ví dụ `http://192.168.1.50:5000`) từ điện thoại hoặc máy tính khác sẽ **không sử dụng được camera tay và giọng nói**. Bạn cần cấu hình đường truyền bảo mật HTTPS bằng **Ngrok**.
+
+### Hướng dẫn thiết lập Ngrok Tunnel:
+
+1. **Đăng ký tài khoản**: Truy cập [ngrok.com](https://ngrok.com/), đăng ký một tài khoản miễn phí và lấy mã thông báo xác thực (`Authtoken`).
+2. **Cấu hình Authtoken**:
+   - Nếu sử dụng ngrok CLI cài đặt trên hệ điều hành, chạy lệnh:
+     ```bash
+     ngrok config add-authtoken <MÃ_TOKEN_CỦA_BẠN>
+     ```
+   - Hoặc bạn có thể thêm cấu hình này vào file `.env` để quản lý tập trung:
+     ```env
+     NGROK_AUTHTOKEN=<MÃ_TOKEN_CỦA_BẠN>
+     ```
+3. **Khởi chạy đường truyền HTTPS**:
+   Trong khi Flask Server đang chạy (ở port `5000`), mở một terminal mới và chạy lệnh:
+   ```bash
+   ngrok http 5000
+   ```
+4. **Truy cập dự án**:
+   Ngrok sẽ cung cấp một đường dẫn công khai có dạng `https://xxxx-xxxx.ngrok-free.app`. Hãy sao chép liên kết này, mở trên trình duyệt điện thoại hoặc máy tính client của bạn. 
+   - Hệ thống lúc này chạy qua HTTPS bảo mật nên trình duyệt sẽ cho phép yêu cầu quyền Micro và Camera.
+   - Bạn có thể điều khiển xe robot từ xa qua internet mà không gặp bất cứ rào cản bảo mật nào!

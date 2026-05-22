@@ -1,7 +1,8 @@
 // ============================================================
 //  src/gemini.rs — Gemini 2.0 Flash Vision Client
 //
-//  Gửi ảnh camera (base64) + prompt → nhận 1 ký tự lệnh
+//  Gửi ảnh camera (base64) + prompt → nhận JSON mô tả vật cản
+//  bằng tiếng Việt và gợi ý hướng rẽ.
 //  Dùng reqwest::blocking vì agent chạy trong thread riêng.
 // ============================================================
 
@@ -14,15 +15,13 @@ const GEMINI_URL: &str =
     "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
 
 const SYSTEM_PROMPT: &str = "\
-Bạn là hệ thống lái tự động của xe robot ZeroClaw. \
-Nhìn vào bức ảnh phía trước và đưa ra quyết định:
-
-- Đường thoáng, không có vật cản gần: trả về 'F' (Tiến)
-- Có vật cản to / tường ngay trước mặt: trả về 'L' hoặc 'R' (Rẽ)
-- Quá sát vật cản / bị kẹt: trả về 'B' (Lùi)
-- Không chắc chắn / nguy hiểm: trả về 'S' (Dừng)
-
-CHỈ trả về ĐÚNG MỘT KÝ TỰ IN HOA (F, B, L, R, S). Không giải thích.";
+Bạn là trợ lý AI phân tích hình ảnh của xe robot ZeroClaw. \
+Nhìn vào bức ảnh phía trước và đưa ra phân tích theo định dạng JSON sau:
+{
+  \"description\": \"Mô tả ngắn gọn vật thể/vật cản chính chắn phía trước bằng tiếng Việt (dưới 15 từ)\",
+  \"command\": \"Lệnh di chuyển đề xuất: 'F' (Tiến nếu thoáng), 'B' (Lùi nếu bị chặn sát), 'L' (Rẽ trái), 'R' (Rẽ phải), 'S' (Dừng lại)\"
+}
+Lưu ý: Chỉ trả về chuỗi JSON hợp lệ, không thêm bất kỳ văn bản giải thích nào khác ngoài JSON. Không bọc trong dấu nháy ```json.";
 
 // ── Gemini request structs ────────────────────────────────────
 
@@ -78,6 +77,14 @@ pub struct GeminiError {
     pub code: Option<u32>,
 }
 
+// ── Output Decision struct ────────────────────────────────────
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct GeminiDecision {
+    pub description: String,
+    pub command: String,
+}
+
 // ── GeminiClient ─────────────────────────────────────────────
 
 pub struct GeminiClient {
@@ -99,17 +106,14 @@ impl GeminiClient {
         }
     }
 
-    /// Gửi ảnh (base64 JPEG) + khoảng cách → nhận 1 ký tự lệnh
-    ///
-    /// Returns: Ok("F") | Ok("B") | Ok("L") | Ok("R") | Ok("S")
-    ///          Err(String) nếu API lỗi / timeout
-    pub fn ask_for_command(
+    /// Gửi ảnh (base64 JPEG) + khoảng cách siêu âm → nhận mô tả & gợi ý (JSON)
+    pub fn analyze_scene(
         &self,
         image_base64: &str,
         distance_cm: f32,
-    ) -> Result<String, String> {
+    ) -> Result<GeminiDecision, String> {
         let prompt = format!(
-            "{}\n\nThông tin bổ sung: Khoảng cách cảm biến phía trước = {:.1} cm.",
+            "{}\n\nThông tin bổ sung: Khoảng cách cảm biến phía trước đo được = {:.1} cm.",
             SYSTEM_PROMPT, distance_cm
         );
 
@@ -159,14 +163,28 @@ impl GeminiClient {
             .and_then(|p| p.text)
             .unwrap_or_default();
 
-        let cmd = raw.trim().to_uppercase();
+        let clean_json = raw.trim()
+            .trim_start_matches("```json")
+            .trim_start_matches("```")
+            .trim_end_matches("```")
+            .trim();
 
-        // Validate — chỉ chấp nhận F B L R S
+        let decision: GeminiDecision = serde_json::from_str(clean_json)
+            .map_err(|e| format!("Serde parse error: {} | Raw output: '{}'", e, raw))?;
+
+        // Validate command
         let valid = ["F", "B", "L", "R", "S"];
-        if let Some(&v) = valid.iter().find(|&&x| cmd.starts_with(x)) {
-            Ok(v.to_string())
+        let cmd_upper = decision.command.trim().to_uppercase();
+        if valid.contains(&cmd_upper.as_str()) {
+            Ok(GeminiDecision {
+                description: decision.description,
+                command: cmd_upper,
+            })
         } else {
-            Err(format!("Gemini returned unexpected: '{}'", raw.trim()))
+            Ok(GeminiDecision {
+                description: decision.description,
+                command: "S".to_string(), // Fallback to Stop if AI commands weirdly
+            })
         }
     }
 }

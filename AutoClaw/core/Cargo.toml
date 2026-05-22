@@ -13,3 +13,15 @@ pyo3 = { version = "0.21", features = ["extension-module"] }
 
 # Serial port I/O (thay thế pyserial hoàn toàn)
 serialport = "4.3.0"
+
+# AI dependencies (dành cho gemini.rs)
+reqwest = { version = "0.11", features = ["blocking", "json"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# ZeroClaw AI Framework & Async Runtime
+zeroclaw = "0.6.9"
+tokio = { version = "1.35", features = ["full"] }
+async-trait = "0.1.77"
+anyhow = "1.0"
+base64 = "0.21"
