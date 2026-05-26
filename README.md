@@ -8,7 +8,7 @@
 
 ## 📖 Giới thiệu dự án
 
-AutoClaw là một dự án nghiên cứu và phát triển xe robot tự hành ứng dụng trí tuệ nhân tạo biên (Edge AI) trên nền tảng **Raspberry Pi 4** và **Arduino Uno R3**. Hệ thống hỗ trợ 4 phương thức tương tác độc lập và đồng thời:
+AutoClaw là một dự án nghiên cứu và phát triển xe robot tự hành ứng dụng trí tuệ nhân tạo biên (Edge AI) xây dựng trên nền tảng bộ kit xe thông minh **ELEGOO Smart Robot Car Kit** kết hợp mạch điều khiển trung tâm **Raspberry Pi 4** và **Arduino Uno R3**. Hệ thống hỗ trợ 4 phương thức tương tác độc lập và đồng thời:
 
 *   🕹️ **Thủ công** — Điều khiển qua nút bấm D-pad trên web dashboard.
 *   🎙️ **Giọng nói** — Điều khiển rẽ hướng, di chuyển và xoay góc camera bằng khẩu lệnh tiếng Việt (sử dụng Web Speech API).
@@ -90,7 +90,104 @@ AutoClaw/
 
 ---
 
-### 💻 Hướng dẫn 1: Triển khai nhanh trên Windows (Localhost - Giả lập)
+### 🍓 Hướng dẫn 1: Triển khai thực tế trên Raspberry Pi 4 (Ưu tiên)
+
+Triển khai thực tế trên xe robot thông qua sự kết hợp giữa **Raspberry Pi 4** (làm máy chủ web và AI) và **Arduino Uno R3** (điều khiển phần cứng). Quy trình lắp đặt và cấu hình cụ thể như sau:
+
+---
+
+#### 🔌 GIAI ĐOẠN A: CHUẨN BỊ PHẦN CỨNG & NẠP CODE ARDUINO
+
+##### Bước 1: Lắp ráp bộ kit xe ELEGOO
+* Lắp ráp động cơ, khung gầm, mạch cầu H L298N, cảm biến siêu âm HC-SR04 và servo SG90 theo tài liệu hướng dẫn của bộ kit xe thông minh ELEGOO.
+* Kết nối các dây điều khiển động cơ và cảm biến vào các chân cắm trên Arduino Uno R3 theo đúng **Sơ đồ chân cắm** ở phần [Phần cứng & Sơ đồ đấu nối Arduino](#️-phần-cứng--sơ-đồ-đấu-nối-arduino) phía trên.
+
+##### Bước 2: Nạp firmware cho Arduino Uno R3 (trên máy tính cá nhân)
+1. Kết nối mạch Arduino Uno R3 vào máy tính cá nhân (PC/Laptop) của bạn bằng cáp USB.
+2. Mở file [AutoClaw.cpp](AutoClaw.cpp) bằng công cụ **Arduino IDE**.
+3. **Quan trọng**: Rút dây kết nối RX/TX (chân 0, 1) trên mạch Arduino ra trước khi nạp để tránh lỗi xung đột cổng Serial.
+4. Trên Arduino IDE, chọn đúng loại Board mạch là **Arduino Uno** và cổng COM kết nối tương ứng.
+5. Tiến hành biên dịch và nạp chương trình (nút **Upload**). Sau khi nạp thành công, cắm lại dây kết nối RX/TX vào các chân 0, 1.
+
+##### Bước 3: Kết nối vật lý Arduino Uno với Raspberry Pi 4
+1. Rút cáp kết nối USB của Arduino Uno ra khỏi máy tính cá nhân.
+2. Cắm cáp USB này từ Arduino Uno vào một trong các cổng USB của mạch **Raspberry Pi 4**.
+3. Gắn camera (Raspberry Pi Camera Module hoặc USB Webcam) vào Pi 4.
+4. Cấp nguồn để khởi động xe robot và mạch Raspberry Pi 4.
+
+---
+
+#### 💻 GIAI ĐOẠN B: TRIỂN KHAI PHẦN MỀM TRÊN RASPBERRY PI 4
+
+##### Bước 4: Kết nối SSH vào Raspberry Pi 4
+1. Đảm bảo Raspberry Pi 4 và máy tính cá nhân của bạn đang kết nối chung một mạng Wi-Fi (hoặc mạng nội bộ LAN).
+2. Tìm địa chỉ IP của Raspberry Pi 4 trong mạng (có thể quét qua phần mềm quét IP hoặc xem trên router).
+3. Mở terminal trên máy tính cá nhân và kết nối SSH sang Pi 4:
+   ```bash
+   ssh pi@<IP_RASPBERRY_PI>
+   ```
+   *(Thay đổi `pi` thành username của Pi nếu bạn đặt tên khác).*
+
+##### Bước 5: Cài đặt các thư viện hệ thống cần thiết qua APT
+Sau khi đã kết nối SSH thành công vào Pi 4, chạy lệnh cài đặt các package phát triển cần thiết cho OpenCV và các dependencies:
+```bash
+sudo apt update
+sudo apt install -y build-essential libatlas-base-dev libjpeg-dev libtiff5-dev libpng-dev
+```
+
+##### Bước 6: Tải mã nguồn và thiết lập Môi trường ảo Python (venv)
+Để tránh lỗi chặn cài thư viện toàn cục (`externally-managed-environment`) trên Debian, khởi tạo môi trường ảo Python trong thư mục dự án:
+```bash
+git clone https://github.com/NgoDKhoi/NT131.Q21-Group-9.git
+cd NT131.Q21-Group-9/AutoClaw
+
+# Khởi tạo và kích hoạt môi trường ảo
+python3 -m venv venv
+source venv/bin/activate
+```
+
+##### Bước 7: Cài đặt các dependencies Python
+Nâng cấp công cụ pip và cài đặt toàn bộ thư viện:
+```bash
+pip install --upgrade pip
+pip install -r requirements.txt
+```
+
+##### Bước 8: Cài đặt Rust Compiler và biên dịch Rust Core
+1. Cài đặt toolchain Rust trên Pi 4:
+   ```bash
+   curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+   ```
+   *Chọn tùy chọn `1` (mặc định) và đợi quá trình cài đặt hoàn tất.*
+2. Cập nhật biến môi trường cho terminal hiện tại:
+   ```bash
+   source $HOME/.cargo/env
+   ```
+3. Biên dịch lõi an toàn `zeroclaw_core` bằng Maturin:
+   ```bash
+   cd core
+   maturin develop --release
+   cd ..
+   ```
+
+##### Bước 9: Cấu hình cổng kết nối và môi trường trên Pi
+Sao chép file cấu hình mẫu `.env.example` thành `.env` và điền thông số thực tế của bạn:
+```bash
+cp .env.example .env
+```
+Sử dụng trình soạn thảo văn bản (ví dụ `nano .env`) để điền `GEMINI_API_KEY`, `TELEGRAM_BOT_TOKEN` và `TELEGRAM_CHAT_ID` để kích hoạt đầy đủ tính năng AI và Telegram Bot.
+
+##### Bước 10: Khởi chạy và vận hành
+Kích hoạt máy chủ điều khiển trên Pi:
+```bash
+python app.py
+```
+* Server sẽ lắng nghe tại cổng `5000`. Bạn mở trình duyệt trên điện thoại hoặc máy tính trong mạng LAN và truy cập: `http://<IP_RASPBERRY_PI>:5000`.
+* *Lưu ý: Để sử dụng các tính năng Camera tay và Nhận diện giọng nói từ xa (yêu cầu kết nối HTTPS bảo mật), hãy xem thêm mục **Cấu hình Ngrok để truy cập qua HTTPS** ở phía dưới.*
+
+---
+
+### 💻 Hướng dẫn 2: Triển khai nhanh trên Windows/PC (Localhost - Giả lập)
 
 Để chạy thử nghiệm giao diện web và thuật toán trên máy tính cá nhân (sử dụng camera webcam giả lập và serial giả lập):
 
@@ -111,84 +208,24 @@ AutoClaw/
    ```
    *Mẹo: Nếu chưa có Rust trên Windows, backend sẽ tự động chuyển sang chế độ Mock Core (`zeroclaw_core.py`) để kiểm thử UI mà không bị crash.*
 4. **Tạo cấu hình môi trường**:
-   Tạo file `.env` với nội dung cấu hình (sử dụng camera mặc định `CAMERA_INDEX=0` và cổng serial mặc định `/dev/ttyACM0` hoặc điều chỉnh cổng Serial tương ứng với thiết bị của bạn):
-   ```env
-   SERIAL_PORT=/dev/ttyACM0
-   CAMERA_INDEX=0
-   GEMINI_API_KEY=YOUR_GEMINI_API_KEY_HERE
-   TELEGRAM_BOT_TOKEN=YOUR_TELEGRAM_BOT_TOKEN_HERE
-   TELEGRAM_CHAT_ID=YOUR_TELEGRAM_CHAT_ID_HERE
-   ```
+   Sao chép file cấu hình mẫu `.env.example` thành `.env` và điền các thông tin của bạn (đặc biệt là API key Gemini và Token Bot Telegram nếu muốn dùng các tính năng AI & điều khiển từ xa):
+   * Trên Windows (PowerShell):
+     ```powershell
+     copy .env.example .env
+     ```
+   * Hoặc tạo thủ công file `.env` từ nội dung mẫu sau:
+     ```env
+     SERIAL_PORT=COM3 # Thay đổi thành cổng COM thực tế của bạn
+     CAMERA_INDEX=0
+     GEMINI_API_KEY=YOUR_GEMINI_API_KEY_HERE # Điền API Key Gemini của bạn để chạy AI
+     TELEGRAM_BOT_TOKEN=YOUR_TELEGRAM_BOT_TOKEN_HERE
+     TELEGRAM_CHAT_ID=YOUR_TELEGRAM_CHAT_ID_HERE
+     ```
 5. **Chạy server**:
    ```bash
    python app.py
    ```
    Truy cập `http://localhost:5000` trên trình duyệt.
-
----
-
-### 🍓 Hướng dẫn 2: Triển khai thực tế trên Raspberry Pi 4
-
-Khi cài đặt trên Raspberry Pi OS, hãy làm theo các bước chuẩn sau để tránh lỗi thư viện liên kết động (`.so`) của OpenCV/NumPy và quy định chặn cài thư viện toàn cục (`externally-managed-environment`) của Debian:
-
-#### Bước 1: Cài đặt các thư viện hệ thống cần thiết qua APT
-SSH vào Raspberry Pi 4 và chạy lệnh cài đặt các package phát triển:
-```bash
-sudo apt update
-sudo apt install -y build-essential libatlas-base-dev libjpeg-dev libtiff5-dev libpng-dev
-```
-
-#### Bước 2: Tải mã nguồn và thiết lập Môi trường ảo Python (venv)
-```bash
-git clone https://github.com/NgoDKhoi/NT131.Q21-Group-9.git
-cd NT131.Q21-Group-9/AutoClaw
-
-# Khởi tạo và kích hoạt môi trường ảo
-python3 -m venv venv
-source venv/bin/activate
-```
-
-#### Bước 3: Cài đặt các dependencies Python
-```bash
-pip install --upgrade pip
-pip install -r requirements.txt
-```
-
-#### Bước 4: Cài đặt Rust Compiler và biên dịch Rust Core
-1. Cài đặt toolchain Rust trên Pi 4:
-   ```bash
-   curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-   ```
-   *Chọn tùy chọn `1` (mặc định) và đợi quá trình cài đặt hoàn tất.*
-2. Cập nhật biến môi trường cho terminal hiện tại:
-   ```bash
-   source $HOME/.cargo/env
-   ```
-3. Biên dịch lõi an toàn `zeroclaw_core` bằng Maturin:
-   ```bash
-   cd core
-   maturin develop --release
-   cd ..
-   ```
-
-#### Bước 5: Cấu hình cổng kết nối và môi trường trên Pi
-Tạo file `.env` chứa cổng kết nối Serial (thường là `/dev/ttyACM0` cho Arduino Uno R3) và camera mặc định (`CAMERA_INDEX=0`):
-```bash
-echo -e "SERIAL_PORT=/dev/ttyACM0\nCAMERA_INDEX=0\nGEMINI_API_KEY=YOUR_GEMINI_API_KEY_HERE\nTELEGRAM_BOT_TOKEN=YOUR_TELEGRAM_BOT_TOKEN_HERE\nTELEGRAM_CHAT_ID=YOUR_TELEGRAM_CHAT_ID_HERE" > .env
-```
-
-#### Bước 6: Nạp firmware cho Arduino Uno R3
-1. Mở file [AutoClaw.cpp](AutoClaw.cpp) bằng Arduino IDE (trên máy tính cá nhân).
-2. **Quan trọng**: Rút dây kết nối RX/TX (chân 0, 1) trên Arduino ra trước khi nạp để tránh lỗi xung đột cổng Serial.
-3. Chọn board mạch **Arduino Uno** và cổng COM tương ứng, tiến hành nạp chương trình (Upload). Cắm lại dây RX/TX sau khi nạp thành công.
-
-#### Bước 7: Khởi chạy và vận hành
-Kích hoạt máy chủ điều khiển trên Pi:
-```bash
-python app.py
-```
-*   Server sẽ lắng nghe tại cổng `5000`. Để truy cập từ điện thoại/máy tính khác trong mạng LAN, mở trình duyệt và truy cập IP của Pi: `http://<IP_RASPBERRY_PI>:5000`.
-*   *Lưu ý: Để sử dụng các tính năng Camera tay và Nhận diện giọng nói từ xa, hãy xem thêm mục **Cấu hình Ngrok để truy cập qua HTTPS** ở phía dưới.*
 
 ---
 
