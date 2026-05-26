@@ -88,7 +88,7 @@ This file contains the structured configuration, context, and project informatio
     "AutoClaw/core/Cargo.toml": "Rust build configuration",
     "AutoClaw/core/src/lib.rs": "Rust safety engine containing PyO3 binding, background serial reader thread, and APIs to start/stop the AutoClaw agent",
     "AutoClaw/core/src/gemini.rs": "Vision AI client utilizing Gemini 2.0 Flash API to generate navigation commands",
-    "AutoClaw/core/src/agent.rs": "AutoClaw autonomous agent runner utilizing tokio background loop, exposing ControlCarTool, GetDistanceTool, and CaptureSnapshotTool",
+    "AutoClaw/core/src/agent.rs": "AutoClaw autonomous agent runner running a tokio background loop and querying Gemini Vision AI with combined sonar and camera perception data",
     "AutoClaw/autoclaw_mock.py": "Python mock implementation of AutoClaw for offline and local testing without hardware",
     "AutoClaw/templates/index.html": "Jinja2 dashboard markup containing system status, live camera panel, and D-pad control UI",
     "AutoClaw/static/css/style.css": "Cyberpunk layout styles including reactive glow animations and layout frames",

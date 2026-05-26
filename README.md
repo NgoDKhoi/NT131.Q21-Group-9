@@ -20,7 +20,7 @@ AutoClaw là một dự án nghiên cứu và phát triển xe robot tự hành 
 ## ✨ Tính năng nổi bật
 
 *   🛡️ **Safety Reflex (Phanh khẩn cấp)**: Lõi an toàn bằng **Rust** tự động kiểm tra khoảng cách và chặn các lệnh Tiến (`F`), ép dừng xe ngay lập tức khi phát hiện vật cản $< 15\text{ cm}$ để tránh va chạm.
-*   🤖 **Lõi Tự Trị AutoClaw Agent**: Tích hợp framework **ZeroClaw** chạy bằng vòng lặp Tokio không đồng bộ (Rust). Khi kích hoạt chế độ lái tự động AI (`/auto/ai`), server Flask chuyển quyền quyết định hoàn toàn cho Rust Agent để gọi các công cụ AI (Tools): đo khoảng cách, chụp ảnh snapshot và đề xuất hướng lái tối ưu tránh vật cản.
+*   🤖 **Lõi Tự Trị AutoClaw Agent**: Chạy bằng vòng lặp Tokio không đồng bộ (Rust). Khi kích hoạt chế độ lái tự động AI (`/auto/ai`), server Flask chuyển quyền quyết định hoàn toàn cho Rust Agent để gọi các công cụ AI (Tools): đo khoảng cách, chụp ảnh snapshot và đề xuất hướng lái tối ưu tránh vật cản.
 *   📸 **Snapshot Camera**: Tiết kiệm 99% băng thông của Raspberry Pi bằng cách chụp và gửi ảnh camera tĩnh khi phát hiện cử chỉ Victory (✌), thay vì truyền phát (stream) video MJPEG liên tục gây nghẽn mạng.
 *   ⏱️ **Non-blocking State Machine**: Hệ thống lái tự động trên Arduino sử dụng biến mốc thời gian `millis()` thay cho hàm chặn `delay()`, giúp xe luôn sẵn sàng nhận lệnh ngắt thủ công từ người dùng ngay tức khắc.
 *   ⚡ **Bộ lọc chống nhiễu cảm biến**: Thuật toán trên Arduino tự động lọc nhiễu tín hiệu siêu âm, xe chỉ phản ứng dừng khi có vật cản xuất hiện trong ít nhất 2 chu kỳ đo liên tiếp (~100ms).
@@ -59,7 +59,7 @@ AutoClaw/
 ├── autoclaw_mock.py        # Giả lập xe AutoClaw (Mock Car) khi chạy Localhost
 │
 ├── core/                   # Lõi an toàn Rust Safety Engine & AutoClaw Agent
-│   ├── Cargo.toml          # Khai báo thư viện phụ thuộc của Rust (bao gồm thư viện zeroclaw)
+│   ├── Cargo.toml          # Khai báo thư viện phụ thuộc của Rust (bao gồm các thư viện pyo3, serialport, tokio...)
 │   └── src/
 │       ├── lib.rs          # PyO3 Bindings, reader thread đọc Serial, APIs start_agent/stop_agent
 │       ├── gemini.rs       # Module Vision AI gọi API Gemini 2.0

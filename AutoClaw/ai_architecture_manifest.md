@@ -34,23 +34,24 @@ This file outlines the technical system architecture, data flows, and design dec
         "rust_thread_safety": {
           "structure": "AutoClaw class",
           "data_sharing": {
-            "port_writer": "Arc<Mutex<Box<dyn SerialPort>>> - Locked briefly inside send_command() / tools to safely push raw byte commands.",
-            "latest_distance": "Arc<Mutex<f32>> - Updated by background thread, polled by Flask GET /status and read by agent tools.",
-            "latest_mode": "Arc<Mutex<String>> - Cache variable synchronizing vehicle AUTO/MANUAL state."
+            "port_writer": "Arc<Mutex<Box<dyn SerialPort>>> - Locked briefly inside send_command() to safely push raw byte commands.",
+            "latest_distance": "Arc<Mutex<f32>> - Updated by background thread, polled by Flask GET /status.",
+            "latest_mode": "Arc<Mutex<String>> - Cache variable synchronizing vehicle AUTO/MANUAL state.",
+            "latest_ai_log": "Arc<Mutex<String>> - Cache variable holding the real-time decision and status log of the AI agent, exposed via get_ai_log()."
           },
           "background_reader_thread": "Spawns within new(). Runs a continuous loop using BufReader::read_line() to block until newline (\\n) is encountered, avoiding buffer tearing/partial parse bugs.",
-          "autoclaw_agent_tools": [
+          "autoclaw_agent_functions": [
             {
-              "name": "ControlCarTool",
+              "name": "control_car",
               "description": "Sends drive command (F, B, L, R, S) down to Arduino with Safety Reflex (overrides F to S if distance < 15cm)"
             },
             {
-              "name": "GetDistanceTool",
+              "name": "get_distance",
               "description": "Reads the latest cached ultrasonic distance in centimeters"
             },
             {
-              "name": "CaptureSnapshotTool",
-              "description": "Calls local Flask endpoint `/snapshot` to retrieve current camera frame base64 without locking the camera hardware device"
+              "name": "capture_snapshot",
+              "description": "Calls local Flask endpoint `/snapshot` (via dynamically read FLASK_PORT env var) to retrieve current camera frame base64 without locking the camera hardware device"
             }
           ]
         }
