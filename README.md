@@ -111,14 +111,19 @@ AutoClaw/
    ```
    *Mẹo: Nếu chưa có Rust trên Windows, backend sẽ tự động chuyển sang chế độ Mock Core (`zeroclaw_core.py`) để kiểm thử UI mà không bị crash.*
 4. **Tạo cấu hình môi trường**:
-   Tạo file `.env` với nội dung cấu hình (sử dụng camera mặc định `CAMERA_INDEX=0` và cổng serial mặc định `/dev/ttyACM0` hoặc điều chỉnh cổng Serial tương ứng với thiết bị của bạn):
-   ```env
-   SERIAL_PORT=/dev/ttyACM0
-   CAMERA_INDEX=0
-   GEMINI_API_KEY=YOUR_GEMINI_API_KEY_HERE
-   TELEGRAM_BOT_TOKEN=YOUR_TELEGRAM_BOT_TOKEN_HERE
-   TELEGRAM_CHAT_ID=YOUR_TELEGRAM_CHAT_ID_HERE
-   ```
+   Sao chép file cấu hình mẫu `.env.example` thành `.env` và điền các thông tin của bạn (đặc biệt là API key Gemini và Token Bot Telegram nếu muốn dùng các tính năng AI & điều khiển từ xa):
+   * Trên Windows (PowerShell):
+     ```powershell
+     copy .env.example .env
+     ```
+   * Hoặc tạo thủ công file `.env` từ nội dung mẫu sau:
+     ```env
+     SERIAL_PORT=COM3 # Thay đổi thành cổng COM thực tế của bạn
+     CAMERA_INDEX=0
+     GEMINI_API_KEY=YOUR_GEMINI_API_KEY_HERE # Điền API Key Gemini của bạn để chạy AI
+     TELEGRAM_BOT_TOKEN=YOUR_TELEGRAM_BOT_TOKEN_HERE
+     TELEGRAM_CHAT_ID=YOUR_TELEGRAM_CHAT_ID_HERE
+     ```
 5. **Chạy server**:
    ```bash
    python app.py
@@ -172,10 +177,11 @@ pip install -r requirements.txt
    ```
 
 #### Bước 5: Cấu hình cổng kết nối và môi trường trên Pi
-Tạo file `.env` chứa cổng kết nối Serial (thường là `/dev/ttyACM0` cho Arduino Uno R3) và camera mặc định (`CAMERA_INDEX=0`):
+Sao chép file cấu hình mẫu `.env.example` thành `.env` và điền thông số thực tế của bạn:
 ```bash
-echo -e "SERIAL_PORT=/dev/ttyACM0\nCAMERA_INDEX=0\nGEMINI_API_KEY=YOUR_GEMINI_API_KEY_HERE\nTELEGRAM_BOT_TOKEN=YOUR_TELEGRAM_BOT_TOKEN_HERE\nTELEGRAM_CHAT_ID=YOUR_TELEGRAM_CHAT_ID_HERE" > .env
+cp .env.example .env
 ```
+Sau đó sử dụng trình soạn thảo (ví dụ `nano .env`) để điền `GEMINI_API_KEY`, `TELEGRAM_BOT_TOKEN` và `TELEGRAM_CHAT_ID` của bạn để kích hoạt đầy đủ tính năng AI và Telegram Bot.
 
 #### Bước 6: Nạp firmware cho Arduino Uno R3
 1. Mở file [AutoClaw.cpp](AutoClaw.cpp) bằng Arduino IDE (trên máy tính cá nhân).
