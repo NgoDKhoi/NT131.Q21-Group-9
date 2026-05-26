@@ -8,7 +8,7 @@
 
 ## 📖 Giới thiệu dự án
 
-AutoClaw là một dự án nghiên cứu và phát triển xe robot tự hành ứng dụng trí tuệ nhân tạo biên (Edge AI) trên nền tảng **Raspberry Pi 4** và **Arduino Uno R3**. Hệ thống hỗ trợ 4 phương thức tương tác độc lập và đồng thời:
+AutoClaw là một dự án nghiên cứu và phát triển xe robot tự hành ứng dụng trí tuệ nhân tạo biên (Edge AI) xây dựng trên nền tảng bộ kit xe thông minh **ELEGOO Smart Robot Car Kit** kết hợp mạch điều khiển trung tâm **Raspberry Pi 4** và **Arduino Uno R3**. Hệ thống hỗ trợ 4 phương thức tương tác độc lập và đồng thời:
 
 *   🕹️ **Thủ công** — Điều khiển qua nút bấm D-pad trên web dashboard.
 *   🎙️ **Giọng nói** — Điều khiển rẽ hướng, di chuyển và xoay góc camera bằng khẩu lệnh tiếng Việt (sử dụng Web Speech API).
@@ -90,49 +90,7 @@ AutoClaw/
 
 ---
 
-### 💻 Hướng dẫn 1: Triển khai nhanh trên Windows (Localhost - Giả lập)
-
-Để chạy thử nghiệm giao diện web và thuật toán trên máy tính cá nhân (sử dụng camera webcam giả lập và serial giả lập):
-
-1. **Tải mã nguồn**:
-   ```bash
-   git clone https://github.com/NgoDKhoi/NT131.Q21-Group-9.git
-   cd NT131.Q21-Group-9/AutoClaw
-   ```
-2. **Cài đặt thư viện Python**:
-   ```bash
-   pip install -r requirements.txt
-   ```
-3. **Biên dịch Rust Core** (Yêu cầu đã cài đặt Rust từ trước):
-   ```bash
-   cd core
-   maturin develop --release
-   cd ..
-   ```
-   *Mẹo: Nếu chưa có Rust trên Windows, backend sẽ tự động chuyển sang chế độ Mock Core (`zeroclaw_core.py`) để kiểm thử UI mà không bị crash.*
-4. **Tạo cấu hình môi trường**:
-   Sao chép file cấu hình mẫu `.env.example` thành `.env` và điền các thông tin của bạn (đặc biệt là API key Gemini và Token Bot Telegram nếu muốn dùng các tính năng AI & điều khiển từ xa):
-   * Trên Windows (PowerShell):
-     ```powershell
-     copy .env.example .env
-     ```
-   * Hoặc tạo thủ công file `.env` từ nội dung mẫu sau:
-     ```env
-     SERIAL_PORT=COM3 # Thay đổi thành cổng COM thực tế của bạn
-     CAMERA_INDEX=0
-     GEMINI_API_KEY=YOUR_GEMINI_API_KEY_HERE # Điền API Key Gemini của bạn để chạy AI
-     TELEGRAM_BOT_TOKEN=YOUR_TELEGRAM_BOT_TOKEN_HERE
-     TELEGRAM_CHAT_ID=YOUR_TELEGRAM_CHAT_ID_HERE
-     ```
-5. **Chạy server**:
-   ```bash
-   python app.py
-   ```
-   Truy cập `http://localhost:5000` trên trình duyệt.
-
----
-
-### 🍓 Hướng dẫn 2: Triển khai thực tế trên Raspberry Pi 4
+### 🍓 Hướng dẫn 1: Triển khai thực tế trên Raspberry Pi 4 (Ưu tiên)
 
 Khi cài đặt trên Raspberry Pi OS, hãy làm theo các bước chuẩn sau để tránh lỗi thư viện liên kết động (`.so`) của OpenCV/NumPy và quy định chặn cài thư viện toàn cục (`externally-managed-environment`) của Debian:
 
@@ -195,6 +153,48 @@ python app.py
 ```
 *   Server sẽ lắng nghe tại cổng `5000`. Để truy cập từ điện thoại/máy tính khác trong mạng LAN, mở trình duyệt và truy cập IP của Pi: `http://<IP_RASPBERRY_PI>:5000`.
 *   *Lưu ý: Để sử dụng các tính năng Camera tay và Nhận diện giọng nói từ xa, hãy xem thêm mục **Cấu hình Ngrok để truy cập qua HTTPS** ở phía dưới.*
+
+---
+
+### 💻 Hướng dẫn 2: Triển khai nhanh trên Windows/PC (Localhost - Giả lập)
+
+Để chạy thử nghiệm giao diện web và thuật toán trên máy tính cá nhân (sử dụng camera webcam giả lập và serial giả lập):
+
+1. **Tải mã nguồn**:
+   ```bash
+   git clone https://github.com/NgoDKhoi/NT131.Q21-Group-9.git
+   cd NT131.Q21-Group-9/AutoClaw
+   ```
+2. **Cài đặt thư viện Python**:
+   ```bash
+   pip install -r requirements.txt
+   ```
+3. **Biên dịch Rust Core** (Yêu cầu đã cài đặt Rust từ trước):
+   ```bash
+   cd core
+   maturin develop --release
+   cd ..
+   ```
+   *Mẹo: Nếu chưa có Rust trên Windows, backend sẽ tự động chuyển sang chế độ Mock Core (`zeroclaw_core.py`) để kiểm thử UI mà không bị crash.*
+4. **Tạo cấu hình môi trường**:
+   Sao chép file cấu hình mẫu `.env.example` thành `.env` và điền các thông tin của bạn (đặc biệt là API key Gemini và Token Bot Telegram nếu muốn dùng các tính năng AI & điều khiển từ xa):
+   * Trên Windows (PowerShell):
+     ```powershell
+     copy .env.example .env
+     ```
+   * Hoặc tạo thủ công file `.env` từ nội dung mẫu sau:
+     ```env
+     SERIAL_PORT=COM3 # Thay đổi thành cổng COM thực tế của bạn
+     CAMERA_INDEX=0
+     GEMINI_API_KEY=YOUR_GEMINI_API_KEY_HERE # Điền API Key Gemini của bạn để chạy AI
+     TELEGRAM_BOT_TOKEN=YOUR_TELEGRAM_BOT_TOKEN_HERE
+     TELEGRAM_CHAT_ID=YOUR_TELEGRAM_CHAT_ID_HERE
+     ```
+5. **Chạy server**:
+   ```bash
+   python app.py
+   ```
+   Truy cập `http://localhost:5000` trên trình duyệt.
 
 ---
 
