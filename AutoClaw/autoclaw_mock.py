@@ -134,3 +134,13 @@ class AutoClawMock:
     def stop_agent(self):
         logger.info("🤖 [MOCK-CAR] Tắt AutoClaw Agent (Mock)")
         self.is_auto = False
+
+    def get_ai_log(self) -> str:
+        if self.is_auto:
+            if self.distance < 15.0:
+                return f"[Mock AI] Vật cản quá gần ({self.distance:.1f} cm) -> Lùi xe (B)"
+            elif self.distance < 30.0:
+                return f"[Mock AI] Phát hiện chướng ngại vật trước mặt ({self.distance:.1f} cm) -> Rẽ trái (L)"
+            else:
+                return f"[Mock AI] Đường đi thoáng ({self.distance:.1f} cm) -> Đi tiến (F)"
+        return "Mock Agent đang tắt."

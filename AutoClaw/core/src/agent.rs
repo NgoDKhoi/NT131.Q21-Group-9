@@ -55,9 +55,11 @@ fn get_distance(latest_distance: &Arc<Mutex<f32>>) -> f32 {
 
 // ── CaptureSnapshotTool ──────────────────────────────────────
 async fn capture_snapshot() -> Result<String, String> {
+    let port = std::env::var("FLASK_PORT").unwrap_or_else(|_| "5000".to_string());
+    let url = format!("http://127.0.0.1:{}/snapshot", port);
     let client = reqwest::Client::new();
     match client
-        .get("http://127.0.0.1:5000/snapshot")
+        .get(&url)
         .send()
         .await
     {
@@ -76,22 +78,25 @@ pub async fn run_agent_loop(
     api_key: String,
     port_writer: Arc<Mutex<Box<dyn SerialPort>>>,
     latest_distance: Arc<Mutex<f32>>,
+    latest_ai_log: Arc<Mutex<String>>,
     shutdown_flag: Arc<AtomicBool>,
 ) -> Result<(), anyhow::Error> {
-    let gemini = GeminiClient::new(&api_key);
-
     println!("🤖 [AutoClaw Agent] Agent khởi hành thành công! Bắt đầu vòng lặp tuần tra tự trị.");
+    *latest_ai_log.lock().unwrap() = "Agent khởi hành thành công! Bắt đầu tuần tra...".to_string();
 
     while !shutdown_flag.load(Ordering::Relaxed) {
         // 1. Đo khoảng cách từ cache
         let dist = get_distance(&latest_distance);
         println!("🔍 [AutoClaw Agent] Khoảng cách hiện tại: {:.1} cm", dist);
+        *latest_ai_log.lock().unwrap() = format!("Đang quét vật cản... Khoảng cách: {:.1} cm", dist);
 
         // 2. Chụp ảnh từ Flask /snapshot
         let image_b64 = match capture_snapshot().await {
             Ok(b64) => b64,
             Err(e) => {
-                eprintln!("❌ [AutoClaw Agent] Lỗi chụp ảnh: {}", e);
+                let err_msg = format!("Lỗi camera: {}", e);
+                eprintln!("❌ [AutoClaw Agent] {}", err_msg);
+                *latest_ai_log.lock().unwrap() = err_msg;
                 // Không có ảnh → dừng xe an toàn
                 control_car("S", &port_writer, &latest_distance).await;
                 // Chờ rồi thử lại
@@ -107,8 +112,10 @@ pub async fn run_agent_loop(
         // gemini.rs dùng reqwest::blocking nên spawn_blocking để không block Tokio
         let api_key_clone = api_key.clone();
         let dist_clone = dist;
+        *latest_ai_log.lock().unwrap() = format!("AI đang phân tích ảnh... Khoảng cách: {:.1} cm", dist);
+
         let decision = tokio::task::spawn_blocking(move || {
-            let client = GeminiClient::new(&api_key_clone);
+            let client = GeminiClient::new(api_key_clone);
             client.analyze_scene(&image_b64, dist_clone)
         })
         .await;
@@ -119,17 +126,22 @@ pub async fn run_agent_loop(
                     "🤖 [AutoClaw Agent] Phân tích: \"{}\" → Lệnh đề xuất: {}",
                     d.description, d.command
                 );
+                *latest_ai_log.lock().unwrap() = format!("{} (Gợi ý: {})", d.description, d.command);
                 // 4. Thực thi lệnh (qua Safety Reflex)
                 let result = control_car(&d.command, &port_writer, &latest_distance).await;
                 println!("🤖 [AutoClaw Agent] {}", result);
             }
             Ok(Err(e)) => {
-                eprintln!("❌ [AutoClaw Agent] Gemini lỗi: {}", e);
+                let err_msg = format!("Lỗi Gemini: {}", e);
+                eprintln!("❌ [AutoClaw Agent] {}", err_msg);
+                *latest_ai_log.lock().unwrap() = err_msg;
                 // Fallback an toàn
                 control_car("S", &port_writer, &latest_distance).await;
             }
             Err(e) => {
-                eprintln!("❌ [AutoClaw Agent] spawn_blocking lỗi: {}", e);
+                let err_msg = format!("Lỗi hệ thống: {}", e);
+                eprintln!("❌ [AutoClaw Agent] {}", err_msg);
+                *latest_ai_log.lock().unwrap() = err_msg;
                 control_car("S", &port_writer, &latest_distance).await;
             }
         }
@@ -144,5 +156,6 @@ pub async fn run_agent_loop(
     }
 
     println!("🤖 [AutoClaw Agent] Agent dừng tuần tra tự trị.");
+    *latest_ai_log.lock().unwrap() = "AutoClaw Agent đã dừng.".to_string();
     Ok(())
 }

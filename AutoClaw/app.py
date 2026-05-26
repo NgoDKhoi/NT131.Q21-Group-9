@@ -287,14 +287,28 @@ def get_status():
             if current_auto_mode == "cpp":
                 current_auto_mode = "off"
                 
+        # Lấy log thời gian thực từ Rust core hoặc Mock car nếu ở chế độ AI
+        ai_log_val = current_ai_log
+        if current_auto_mode == "ai" and robot is not None:
+            try:
+                ai_log_val = robot.get_ai_log()
+            except Exception as le:
+                logger.error(f"Error fetching AI log: {le}")
+
         return jsonify({
             "distance": dist_str,
             "auto": current_auto_mode,
-            "ai_log": current_ai_log,
+            "ai_log": ai_log_val,
         })
     except Exception as e:
         logger.error(f"get_status error: {e}")
-        return jsonify({"distance": "---", "auto": current_auto_mode, "ai_log": current_ai_log})
+        ai_log_val = current_ai_log
+        if current_auto_mode == "ai" and robot is not None:
+            try:
+                ai_log_val = robot.get_ai_log()
+            except Exception:
+                pass
+        return jsonify({"distance": "---", "auto": current_auto_mode, "ai_log": ai_log_val})
 
 @app.route("/snapshot")
 def snapshot():

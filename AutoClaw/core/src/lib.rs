@@ -36,6 +36,9 @@ pub struct AutoClaw {
     // Cache mode: "MANUAL" | "AUTO"
     latest_mode: Arc<Mutex<String>>,
 
+    // Cache AI log: agent ghi, Python đọc
+    latest_ai_log: Arc<Mutex<String>>,
+
     // Cờ dừng và join handle của AutoClaw Rust Agent
     agent_shutdown: Arc<std::sync::atomic::AtomicBool>,
     agent_thread: Arc<Mutex<Option<thread::JoinHandle<()>>>>,
@@ -67,6 +70,7 @@ impl AutoClaw {
         // Shared state
         let latest_distance = Arc::new(Mutex::new(999.0f32));
         let latest_mode     = Arc::new(Mutex::new("MANUAL".to_string()));
+        let latest_ai_log   = Arc::new(Mutex::new("Đang chờ lệnh (✌ hoặc khẩu lệnh \"AI phân tích\")...".to_string()));
 
         // Clone Arc để move vào reader thread
         let dist_ref = Arc::clone(&latest_distance);
@@ -124,6 +128,7 @@ impl AutoClaw {
             port_writer: Arc::new(Mutex::new(writer)),
             latest_distance,
             latest_mode,
+            latest_ai_log,
             agent_shutdown,
             agent_thread,
         })
@@ -198,6 +203,11 @@ impl AutoClaw {
         }
     }
 
+    /// Trả về log phân tích mới nhất của AI agent từ cache.
+    fn get_ai_log(&self) -> PyResult<String> {
+        Ok(self.latest_ai_log.lock().unwrap().clone())
+    }
+
     /// Bắt đầu Agent tuần tra tự trị bằng Rust sử dụng framework AutoClaw
     fn start_agent(&self, api_key: String) -> PyResult<()> {
         self.stop_agent()?;
@@ -207,11 +217,12 @@ impl AutoClaw {
         let shutdown_flag = Arc::clone(&self.agent_shutdown);
         let port_writer = Arc::clone(&self.port_writer);
         let latest_distance = Arc::clone(&self.latest_distance);
+        let latest_ai_log = Arc::clone(&self.latest_ai_log);
 
         let handle = thread::spawn(move || {
             let rt = tokio::runtime::Runtime::new().unwrap();
             rt.block_on(async {
-                if let Err(e) = agent::run_agent_loop(api_key, port_writer, latest_distance, shutdown_flag).await {
+                if let Err(e) = agent::run_agent_loop(api_key, port_writer, latest_distance, latest_ai_log, shutdown_flag).await {
                     eprintln!("🚨 [AutoClaw Agent] Lỗi trong vòng lặp Agent: {:?}", e);
                 }
             });
