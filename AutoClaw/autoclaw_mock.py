@@ -3,16 +3,16 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-class ZeroClaw:
-    """Mock implementation of the ZeroClaw Rust Core for UI/Frontend testing."""
+class AutoClawMock:
+    """Mock implementation of the AutoClaw Rust Core for UI/Frontend testing."""
     def __init__(self, port, baud):
-        logger.info(f"🤖 [MOCK-CORE] Initializing on {port} @ {baud} baud")
+        logger.info(f"🤖 [MOCK-CAR] Initializing on {port} @ {baud} baud")
         self.distance = 120.0
         self.is_auto = False
         self.servo_pos = 90
         
     def send_command(self, cmd):
-        logger.info(f"📡 [MOCK-CORE] Command: {cmd}")
+        logger.info(f"📡 [MOCK-CAR] Command: {cmd}")
         
         if cmd == 'A':
             self.is_auto = True
@@ -21,11 +21,11 @@ class ZeroClaw:
         elif cmd == 'S':
             if self.is_auto:
                 self.is_auto = False
-                logger.info("🤖 [MOCK-CORE] Auto Drive stopped via emergency stop")
+                logger.info("🤖 [MOCK-CAR] Auto Drive stopped via emergency stop")
         elif cmd in ('1', '2', '3'):
             positions = {'1': 0, '2': 180, '3': 90}
             self.servo_pos = positions.get(cmd, 90)
-            logger.info(f"📸 [MOCK-CORE] Servo camera turned to position {cmd} ({self.servo_pos} deg)")
+            logger.info(f"📸 [MOCK-CAR] Servo camera turned to position {cmd} ({self.servo_pos} deg)")
         elif cmd == 'F':
             if not self.is_auto:
                 self.distance = max(5.0, self.distance - 10.0)
@@ -44,7 +44,7 @@ class ZeroClaw:
                 self.distance = max(5.0, self.distance - random.uniform(3.0, 8.0))
             else:
                 # Blocked! Backing up and turning
-                logger.info("🚨 [MOCK-CORE] Obstacle detected! Simulating scanner sweep and redirect...")
+                logger.info("🚨 [MOCK-CAR] Obstacle detected! Simulating scanner sweep and redirect...")
                 self.distance = random.uniform(80.0, 150.0)  # Reset distance after simulated redirection
         else:
             # Manual mode slight distance noise
@@ -64,7 +64,7 @@ class ZeroClaw:
         
         # prompt & payload
         system_prompt = (
-            "Bạn là trợ lý AI phân tích hình ảnh của xe robot ZeroClaw. "
+            "Bạn là trợ lý AI phân tích hình ảnh của xe robot AutoClaw. "
             "Nhìn vào bức ảnh phía trước và đưa ra phân tích theo định dạng JSON sau:\n"
             "{\n"
             '  "description": "Mô tả ngắn gọn vật thể/vật cản chính chắn phía trước bằng tiếng Việt (dưới 15 từ)",\n'
@@ -111,7 +111,7 @@ class ZeroClaw:
                 "command": cmd
             }, ensure_ascii=False)
         except Exception as e:
-            logger.error(f"[MOCK-CORE] Gemini call failed: {e}. Returning mock analysis.")
+            logger.error(f"[MOCK-CAR] Gemini call failed: {e}. Returning mock analysis.")
             mock_desc = "Cửa sổ/Vật cản mock"
             if self.distance < 15.0:
                 mock_desc = "Bức tường quá gần"
@@ -128,9 +128,9 @@ class ZeroClaw:
             }, ensure_ascii=False)
 
     def start_agent(self, api_key: str):
-        logger.info("🤖 [MOCK-CORE] Bật ZeroClaw Agent (Mock)")
+        logger.info("🤖 [MOCK-CAR] Bật AutoClaw Agent (Mock)")
         self.is_auto = True
 
     def stop_agent(self):
-        logger.info("🤖 [MOCK-CORE] Tắt ZeroClaw Agent (Mock)")
+        logger.info("🤖 [MOCK-CAR] Tắt AutoClaw Agent (Mock)")
         self.is_auto = False

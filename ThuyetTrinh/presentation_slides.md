@@ -42,7 +42,7 @@ Tài liệu này chứa nội dung chi tiết cho **15 Slide** báo cáo đồ �
         TelegramBot -->|API Requests| FlaskBackend
         
         subgraph Raspberry Pi / Máy tính chủ
-            FlaskBackend -->|PyO3 Bridge| RustCore[Rust Safety Core / ZeroClaw Agent]
+            FlaskBackend -->|PyO3 Bridge| RustCore[Rust Safety Core / AutoClaw Agent]
             RustCore -->|Gemini API| Gemini[Gemini 2.0 Flash Vision]
         end
         
@@ -83,7 +83,7 @@ Tài liệu này chứa nội dung chi tiết cho **15 Slide** báo cáo đồ �
 ## 🖥️ Slide 6: Công nghệ cốt lõi: Edge AI & Gemini Vision
 * **Nội dung chính**:
   * **Mô hình**: Gemini 2.0 Flash API (tận dụng tốc độ phản hồi cực nhanh < 1.5 giây và khả năng hiểu hình ảnh chất lượng cao).
-  * **ZeroClaw Agent Framework**: Thiết lập một AI Agent chuyên biệt chạy trên nền tảng Rust (Tokio runtime).
+  * **AutoClaw Agent Framework**: Thiết lập một AI Agent chuyên biệt chạy trên nền tảng Rust (Tokio runtime).
   * **Prompt Engineering cho Robot**:
     * AI hoạt động như một bộ não lái xe.
     * Trả về định dạng JSON nghiêm ngặt chứa: `description` (Mô tả vật cản bằng tiếng Việt dưới 15 từ) và `command` (Hướng đề xuất di chuyển: F, B, L, R, S).
@@ -96,9 +96,9 @@ Tài liệu này chứa nội dung chi tiết cho **15 Slide** báo cáo đồ �
 * **Nội dung chính**:
   * **Lý do sử dụng Rust**: Bảo đảm tính an toàn bộ nhớ, tránh tình trạng race-condition khi nhiều thread cùng ghi cổng Serial và tăng hiệu năng xử lý tác vụ đồng thời.
   * **Kiến trúc liên kết**:
-    * Thư viện `zeroclaw_core` được viết bằng Rust và biên dịch thành module Python thông qua **PyO3** và **Maturin**.
+    * Thư viện `autoclaw_core` được viết bằng Rust và biên dịch thành module Python thông qua **PyO3** và **Maturin**.
     * Python Flask chỉ cần gọi các hàm từ Rust biên dịch sẵn mà không cần quản lý kết nối Serial thô.
-  * **Cơ chế dự phòng (Fallback)**: Nếu chạy thử nghiệm trên máy không có môi trường biên dịch Rust, backend tự động chuyển sang file mock `zeroclaw_core.py` để chạy thử nghiệm giao diện mà không bị lỗi.
+  * **Cơ chế dự phòng (Fallback)**: Nếu chạy thử nghiệm trên máy không có môi trường biên dịch Rust, backend tự động chuyển sang file mock `autoclaw_mock.py` để chạy thử nghiệm giao diện mà không bị lỗi.
 * **Lời thoại người trình bày**:
   > "Một thách thức lớn trong lập trình điều khiển xe qua Web là xung đột tài nguyên cổng Serial khi nhiều yêu cầu web gửi đến cùng lúc. Nhóm đã giải quyết triệt để bằng cách viết toàn bộ lõi quản lý kết nối và đọc luồng dữ liệu nhấp nháy bằng ngôn ngữ Rust, giao tiếp độc quyền thông qua cầu nối PyO3 sang Python Flask."
 

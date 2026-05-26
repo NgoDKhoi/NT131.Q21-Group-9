@@ -167,7 +167,7 @@ pub async fn run_agent_loop(
     });
     let snapshot_tool = Arc::new(CaptureSnapshotTool);
 
-    // 3. Xây dựng ZeroClaw Agent
+    // 3. Xây dựng AutoClaw Agent
     let agent = Agent::builder()
         .model_provider(Box::new(provider))
         .tools(vec![
@@ -177,7 +177,7 @@ pub async fn run_agent_loop(
         ])
         .build()?;
 
-    println!("🤖 [ZeroClaw Agent] Agent khởi hành thành công! Bắt đầu vòng lặp tuần tra tự trị.");
+    println!("🤖 [AutoClaw Agent] Agent khởi hành thành công! Bắt đầu vòng lặp tuần tra tự trị.");
 
     // System instruction để hướng dẫn Agent cách tuần tra và điều khiển
     let system_instruction = "Bạn là bộ não tự trị lái xe AutoClaw. Hãy liên tục gọi các công cụ: \
@@ -189,10 +189,10 @@ pub async fn run_agent_loop(
         // Gửi lệnh để kích hoạt agent turn
         match agent.turn(system_instruction).await {
             Ok(reply) => {
-                println!("🤖 [ZeroClaw Agent] Phản hồi: {}", reply);
+                println!("🤖 [AutoClaw Agent] Phản hồi: {}", reply);
             }
             Err(e) => {
-                eprintln!("❌ [ZeroClaw Agent] Lỗi trong lượt chạy: {:?}", e);
+                eprintln!("❌ [AutoClaw Agent] Lỗi trong lượt chạy: {:?}", e);
             }
         }
 
@@ -205,6 +205,6 @@ pub async fn run_agent_loop(
         }
     }
 
-    println!("🤖 [ZeroClaw Agent] Agent dừng tuần tra tự trị.");
+    println!("🤖 [AutoClaw Agent] Agent dừng tuần tra tự trị.");
     Ok(())
 }

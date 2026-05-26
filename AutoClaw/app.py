@@ -4,7 +4,7 @@
 AutoClaw Control Panel — Flask Backend v4.0
 ============================================
 Thay đổi so với v3.0:
-- Serial hoàn toàn do Rust Core (zeroclaw_core) quản lý
+- Serial hoàn toàn do Rust Core (autoclaw_core) quản lý
 - Xóa toàn bộ pyserial — không còn tranh cổng Serial
 - Safety Reflex (< 15cm → Auto-STOP) chạy trong Rust
 - Config đọc từ .env qua python-dotenv
@@ -29,7 +29,7 @@ load_dotenv()
 SERIAL_PORT = os.getenv("SERIAL_PORT",  "/dev/ttyACM0")
 BAUD_RATE   = int(os.getenv("BAUD_RATE",  "9600"))
 FLASK_PORT  = int(os.getenv("FLASK_PORT", "5000"))
-SECRET_KEY  = os.getenv("SECRET_KEY",   "zeroclaw_uit_2026")
+SECRET_KEY  = os.getenv("SECRET_KEY",   "autoclaw_uit_2026")
 
 CAMERA_INDEX  = int(os.getenv("CAMERA_INDEX", "0"))
 NGROK_AUTHTOKEN = os.getenv("NGROK_AUTHTOKEN")
@@ -52,7 +52,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # ══════════════════════════════════════════════════════════════
-#  RUST CORE — ZeroClaw (PyO3)
+#  RUST CORE — AutoClaw (PyO3)
 #  Serial được mở 1 lần duy nhất tại đây.
 #  Background reader thread spawn bên trong __init__ của Rust.
 # ══════════════════════════════════════════════════════════════
@@ -61,17 +61,32 @@ robot = None
 def init_robot() -> bool:
     global robot
     try:
-        from zeroclaw_core import ZeroClaw
-        robot = ZeroClaw(SERIAL_PORT, BAUD_RATE)
-        logger.info(f"✅ ZeroClaw Core connected: {SERIAL_PORT} @ {BAUD_RATE}")
+        # Thử load lõi thực tế biên dịch bằng Rust
+        from autoclaw_core import AutoClaw
+        robot = AutoClaw(SERIAL_PORT, BAUD_RATE)
+        logger.info(f"✅ AutoClaw Core (Rust) connected: {SERIAL_PORT} @ {BAUD_RATE}")
         return True
     except ImportError:
-        logger.error("❌ zeroclaw_core not found. Chạy: cd core && maturin develop")
-        return False
+        logger.warning("💡 autoclaw_core (Rust) không tìm thấy. Chuyển sang chế độ giả lập (Mock)...")
+        try:
+            from autoclaw_mock import AutoClawMock
+            robot = AutoClawMock(SERIAL_PORT, BAUD_RATE)
+            logger.info("🤖 AutoClaw Mock (Simulation) connected")
+            return True
+        except ImportError as e:
+            logger.error(f"❌ Không thể load cả Lõi Rust và Mock: {e}")
+            return False
     except RuntimeError as e:
-        logger.error(f"❌ Serial init failed: {e}")
-        logger.info("💡 Kiểm tra: ls /dev/ttyACM*")
-        return False
+        logger.error(f"❌ Lõi nhúng báo lỗi khởi tạo: {e}")
+        logger.warning("💡 Chuyển sang chế độ giả lập (Mock) để chạy giao diện...")
+        try:
+            from autoclaw_mock import AutoClawMock
+            robot = AutoClawMock(SERIAL_PORT, BAUD_RATE)
+            logger.info("🤖 AutoClaw Mock (Simulation) connected")
+            return True
+        except ImportError as e2:
+            logger.error(f"❌ Không thể load Mock fallback: {e2}")
+            return False
 
 # ══════════════════════════════════════════════════════════════
 #  CAMERA — Snapshot on demand (thay thế MJPEG stream liên tục)
@@ -156,7 +171,7 @@ def control(cmd: str):
         logger.error(f"Serial write error: {e}")
         return jsonify({"status": "error", "message": str(e)}), 500
 
-# ── AI Agent Loop (ZeroClaw) ─────────────────────────────────
+# ── AI Agent Loop (AutoClaw) ─────────────────────────────────
 current_auto_mode = "off"
 ai_agent_thread = None
 current_ai_log = "Đang chờ lệnh (✌ hoặc khẩu lệnh \"AI phân tích\")..."
@@ -202,10 +217,10 @@ def start_ai_agent() -> bool:
         
     try:
         robot.start_agent(api_key)
-        current_ai_log = "ZeroClaw Rust Agent đang hoạt động tuần tra tự trị..."
+        current_ai_log = "AutoClaw Rust Agent đang hoạt động tuần tra tự trị..."
         return True
     except Exception as e:
-        logger.error(f"❌ Không thể khởi động ZeroClaw Agent: {e}")
+        logger.error(f"❌ Không thể khởi động AutoClaw Agent: {e}")
         current_ai_log = f"Lỗi khởi động Agent: {e}"
         return False
 
@@ -214,9 +229,9 @@ def stop_ai_agent():
     if robot is not None:
         try:
             robot.stop_agent()
-            current_ai_log = "ZeroClaw Rust Agent đã dừng."
+            current_ai_log = "AutoClaw Rust Agent đã dừng."
         except Exception as e:
-            logger.error(f"❌ Không thể dừng ZeroClaw Agent: {e}")
+            logger.error(f"❌ Không thể dừng AutoClaw Agent: {e}")
 
 @app.route("/auto/<state>")
 def auto_mode(state: str):

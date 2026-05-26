@@ -1,10 +1,10 @@
 [package]
-name    = "zeroclaw-core"
+name    = "autoclaw-core"
 version = "0.1.0"
 edition = "2021"
 
 [lib]
-name       = "zeroclaw_core"
+name       = "autoclaw_core"
 crate-type = ["cdylib"]   # Bắt buộc để Maturin build thành .so cho Python
 
 [dependencies]

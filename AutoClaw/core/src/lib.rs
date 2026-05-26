@@ -1,5 +1,5 @@
 // ============================================================
-//  ZeroClaw Core — Rust Safety Engine (PyO3)
+//  AutoClaw Core — Rust Safety Engine (PyO3)
 //  
 //  Kiến trúc giải quyết 2 vấn đề cũ:
 //  1. Serial owned hoàn toàn bởi Rust — Python không mở port
@@ -25,7 +25,7 @@ const SAFETY_DISTANCE_CM: f32 = 15.0;
 // Dùng Arc<Mutex<T>> thay vì channel để Flask có thể poll
 // get_distance() bất kỳ lúc nào mà không block
 #[pyclass]
-pub struct ZeroClaw {
+pub struct AutoClaw {
     // Writer: Flask thread gọi send_command() → ghi Serial
     port_writer: Arc<Mutex<Box<dyn SerialPort>>>,
 
@@ -36,13 +36,13 @@ pub struct ZeroClaw {
     // Cache mode: "MANUAL" | "AUTO"
     latest_mode: Arc<Mutex<String>>,
 
-    // Cờ dừng và join handle của ZeroClaw Rust Agent
+    // Cờ dừng và join handle của AutoClaw Rust Agent
     agent_shutdown: Arc<std::sync::atomic::AtomicBool>,
     agent_thread: Arc<Mutex<Option<thread::JoinHandle<()>>>>,
 }
 
 #[pymethods]
-impl ZeroClaw {
+impl AutoClaw {
     /// Khởi tạo: mở Serial, spawn reader thread
     #[new]
     fn new(port_name: &str, baud_rate: u32) -> PyResult<Self> {
@@ -84,7 +84,7 @@ impl ZeroClaw {
                 match reader.read_line(&mut line) {
                     Ok(0) => {
                         // EOF — Arduino ngắt kết nối
-                        eprintln!("[ZeroClaw] Serial EOF, reader thread thoát.");
+                        eprintln!("[AutoClaw] Serial EOF, reader thread thoát.");
                         break;
                     }
                     Ok(_) => {
@@ -103,13 +103,13 @@ impl ZeroClaw {
                                 *dist_ref.lock().unwrap() = dist;
                             }
                         }
-                        // Bỏ qua: "READY", "ZeroClaw READY", bytes rác
+                        // Bỏ qua: "READY", "AutoClaw READY", bytes rác
                     }
                     Err(e) => {
                         // Timeout (100ms) → bình thường, tiếp tục vòng lặp
                         // Lỗi thật → log và dừng lại
                         if e.kind() != std::io::ErrorKind::TimedOut {
-                            eprintln!("[ZeroClaw] Serial read error: {}", e);
+                            eprintln!("[AutoClaw] Serial read error: {}", e);
                             thread::sleep(Duration::from_millis(50));
                         }
                     }
@@ -120,7 +120,7 @@ impl ZeroClaw {
         let agent_shutdown = Arc::new(std::sync::atomic::AtomicBool::new(false));
         let agent_thread   = Arc::new(Mutex::new(None));
 
-        Ok(ZeroClaw {
+        Ok(AutoClaw {
             port_writer: Arc::new(Mutex::new(writer)),
             latest_distance,
             latest_mode,
@@ -198,7 +198,7 @@ impl ZeroClaw {
         }
     }
 
-    /// Bắt đầu Agent tuần tra tự trị bằng Rust sử dụng framework ZeroClaw
+    /// Bắt đầu Agent tuần tra tự trị bằng Rust sử dụng framework AutoClaw
     fn start_agent(&self, api_key: String) -> PyResult<()> {
         self.stop_agent()?;
 
@@ -212,13 +212,13 @@ impl ZeroClaw {
             let rt = tokio::runtime::Runtime::new().unwrap();
             rt.block_on(async {
                 if let Err(e) = agent::run_agent_loop(api_key, port_writer, latest_distance, shutdown_flag).await {
-                    eprintln!("🚨 [ZeroClaw Agent] Lỗi trong vòng lặp Agent: {:?}", e);
+                    eprintln!("🚨 [AutoClaw Agent] Lỗi trong vòng lặp Agent: {:?}", e);
                 }
             });
         });
 
         *self.agent_thread.lock().unwrap() = Some(handle);
-        println!("🤖 [ZeroClaw Core] Đã khởi chạy Agent chạy ngầm trong Rust.");
+        println!("🤖 [AutoClaw Core] Đã khởi chạy Agent chạy ngầm trong Rust.");
         Ok(())
     }
 
@@ -229,14 +229,14 @@ impl ZeroClaw {
             let _ = handle.join();
         }
         self.agent_shutdown.store(false, std::sync::atomic::Ordering::Relaxed);
-        println!("🤖 [ZeroClaw Core] Đã dừng Agent chạy ngầm trong Rust.");
+        println!("🤖 [AutoClaw Core] Đã dừng Agent chạy ngầm trong Rust.");
         Ok(())
     }
 }
 
 /// PyO3 module entry point
 #[pymodule]
-fn zeroclaw_core(_py: Python, m: &PyModule) -> PyResult<()> {
-    m.add_class::<ZeroClaw>()?;
+fn autoclaw_core(_py: Python, m: &PyModule) -> PyResult<()> {
+    m.add_class::<AutoClaw>()?;
     Ok(())
 }

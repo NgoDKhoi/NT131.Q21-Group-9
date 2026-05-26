@@ -5,7 +5,7 @@
 #  Lưu ý:
 #  - pyserial ĐÃ BỊ XÓA: Serial nay do Rust Core quản lý
 #  - mediapipe ĐÃ BỊ XÓA: dùng CDN client-side (không cần server)
-#  - zeroclaw_core build riêng: cd core && maturin develop
+#  - autoclaw_core build riêng: cd core && maturin develop
 # ══════════════════════════════════════════════════════
 
 # Web Framework

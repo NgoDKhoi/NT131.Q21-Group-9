@@ -63,7 +63,7 @@ This file contains the structured configuration, context, and project informatio
       "pyTelegramBotAPI": "Telegram Bot API wrapper for remote monitoring and control"
     },
     "rust_core": {
-      "module_name": "zeroclaw_core",
+      "module_name": "autoclaw_core",
       "dependencies": {
         "pyo3": "Python-Rust bridge (v0.21)",
         "serialport": "High-level serial communications (v4.3.0)",
@@ -86,10 +86,10 @@ This file contains the structured configuration, context, and project informatio
     "AutoClaw/.env": "Local environment variables (SERIAL_PORT, BAUD_RATE, FLASK_PORT, SECRET_KEY, NGROK_AUTHTOKEN, GEMINI_API_KEY, CAMERA_INDEX, TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID)",
     "AutoClaw/AutoClaw.cpp": "Arduino Uno firmware carrying non-blocking obstacle avoidance state machine (millis-based)",
     "AutoClaw/core/Cargo.toml": "Rust build configuration",
-    "AutoClaw/core/src/lib.rs": "Rust safety engine containing PyO3 binding, background serial reader thread, and APIs to start/stop the ZeroClaw agent",
+    "AutoClaw/core/src/lib.rs": "Rust safety engine containing PyO3 binding, background serial reader thread, and APIs to start/stop the AutoClaw agent",
     "AutoClaw/core/src/gemini.rs": "Vision AI client utilizing Gemini 2.0 Flash API to generate navigation commands",
-    "AutoClaw/core/src/agent.rs": "ZeroClaw autonomous agent runner utilizing tokio background loop, exposing ControlCarTool, GetDistanceTool, and CaptureSnapshotTool",
-    "AutoClaw/zeroclaw_core.py": "Python mock implementation of ZeroClaw core for offline and local testing without hardware",
+    "AutoClaw/core/src/agent.rs": "AutoClaw autonomous agent runner utilizing tokio background loop, exposing ControlCarTool, GetDistanceTool, and CaptureSnapshotTool",
+    "AutoClaw/autoclaw_mock.py": "Python mock implementation of AutoClaw for offline and local testing without hardware",
     "AutoClaw/templates/index.html": "Jinja2 dashboard markup containing system status, live camera panel, and D-pad control UI",
     "AutoClaw/static/css/style.css": "Cyberpunk layout styles including reactive glow animations and layout frames",
     "AutoClaw/static/js/api.js": "Command dispatch helper exposing window.cmd() and window.toggleAuto()",
@@ -154,7 +154,7 @@ This file contains the structured configuration, context, and project informatio
       }
     },
     "GET /auto/<state>": {
-      "description": "Set autonomous drive mode state. Chế độ 'ai' kích hoạt ZeroClaw Agent chạy bằng Rust (gọi robot.start_agent(api_key)) chạy ngầm vòng lặp Tokio. Trạng thái 'off' hoặc 'cpp' sẽ ngắt agent này bằng robot.stop_agent().",
+      "description": "Set autonomous drive mode state. Chế độ 'ai' kích hoạt AutoClaw Agent chạy bằng Rust (gọi robot.start_agent(api_key)) chạy ngầm vòng lặp Tokio. Trạng thái 'off' hoặc 'cpp' sẽ ngắt agent này bằng robot.stop_agent().",
       "parameters": {
         "state": "off, cpp, ai"
       }

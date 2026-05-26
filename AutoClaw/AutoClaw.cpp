@@ -1,7 +1,7 @@
 #include <Servo.h>
 
 // ============================================================
-//  ZeroClaw Arduino Firmware - Intelligent Scan Obstacle Avoidance
+//  AutoClaw Arduino Firmware - Intelligent Scan Obstacle Avoidance
 // ============================================================
 
 // ── Pin Configuration (Matches README.md) ──────────────────

@@ -20,7 +20,7 @@ AutoClaw là một dự án nghiên cứu và phát triển xe robot tự hành 
 ## ✨ Tính năng nổi bật
 
 *   🛡️ **Safety Reflex (Phanh khẩn cấp)**: Lõi an toàn bằng **Rust** tự động kiểm tra khoảng cách và chặn các lệnh Tiến (`F`), ép dừng xe ngay lập tức khi phát hiện vật cản $< 15\text{ cm}$ để tránh va chạm.
-*   🤖 **Lõi Tự Trị ZeroClaw Agent**: Tích hợp framework **ZeroClaw** chạy bằng vòng lặp Tokio không đồng bộ (Rust). Khi kích hoạt chế độ lái tự động AI (`/auto/ai`), server Flask chuyển quyền quyết định hoàn toàn cho Rust Agent để gọi các công cụ AI (Tools): đo khoảng cách, chụp ảnh snapshot và đề xuất hướng lái tối ưu tránh vật cản.
+*   🤖 **Lõi Tự Trị AutoClaw Agent**: Tích hợp framework **ZeroClaw** chạy bằng vòng lặp Tokio không đồng bộ (Rust). Khi kích hoạt chế độ lái tự động AI (`/auto/ai`), server Flask chuyển quyền quyết định hoàn toàn cho Rust Agent để gọi các công cụ AI (Tools): đo khoảng cách, chụp ảnh snapshot và đề xuất hướng lái tối ưu tránh vật cản.
 *   📸 **Snapshot Camera**: Tiết kiệm 99% băng thông của Raspberry Pi bằng cách chụp và gửi ảnh camera tĩnh khi phát hiện cử chỉ Victory (✌), thay vì truyền phát (stream) video MJPEG liên tục gây nghẽn mạng.
 *   ⏱️ **Non-blocking State Machine**: Hệ thống lái tự động trên Arduino sử dụng biến mốc thời gian `millis()` thay cho hàm chặn `delay()`, giúp xe luôn sẵn sàng nhận lệnh ngắt thủ công từ người dùng ngay tức khắc.
 *   ⚡ **Bộ lọc chống nhiễu cảm biến**: Thuật toán trên Arduino tự động lọc nhiễu tín hiệu siêu âm, xe chỉ phản ứng dừng khi có vật cản xuất hiện trong ít nhất 2 chu kỳ đo liên tiếp (~100ms).
@@ -56,9 +56,9 @@ AutoClaw/
 ├── requirements.txt        # Các thư viện Python cần cài đặt
 ├── .env                    # Lưu trữ cấu hình cổng COM/Serial, Camera Index, Port Web, Key bảo mật, Token API và Telegram Bot.
 ├── AutoClaw.cpp            # Firmware Arduino Uno (C++)
-├── zeroclaw_core.py        # Mock implementation của ZeroClaw Core khi chạy Localhost giả lập
+├── autoclaw_mock.py        # Giả lập xe AutoClaw (Mock Car) khi chạy Localhost
 │
-├── core/                   # Lõi an toàn Rust Safety Engine & ZeroClaw Agent
+├── core/                   # Lõi an toàn Rust Safety Engine & AutoClaw Agent
 │   ├── Cargo.toml          # Khai báo thư viện phụ thuộc của Rust (bao gồm thư viện zeroclaw)
 │   └── src/
 │       ├── lib.rs          # PyO3 Bindings, reader thread đọc Serial, APIs start_agent/stop_agent
@@ -85,7 +85,7 @@ AutoClaw/
 ### Yêu cầu hệ thống
 *   **Hệ điều hành**: Raspberry Pi OS (Debian 12 Bookworm hoặc mới hơn) trên Pi 4 / Windows 10/11 trên PC.
 *   **Python**: Phiên bản 3.10 đến 3.13.
-*   **Rust & Cargo**: Để biên dịch lõi an toàn `zeroclaw_core`.
+*   **Rust & Cargo**: Để biên dịch lõi an toàn `autoclaw_core`.
 *   **Arduino IDE**: Để nạp chương trình lên Arduino Uno R3.
 
 ---
@@ -163,7 +163,7 @@ pip install -r requirements.txt
    ```bash
    source $HOME/.cargo/env
    ```
-3. Biên dịch lõi an toàn `zeroclaw_core` bằng Maturin:
+3. Biên dịch lõi an toàn `autoclaw_core` bằng Maturin:
    ```bash
    cd core
    maturin develop --release
@@ -206,7 +206,7 @@ python app.py
    maturin develop --release
    cd ..
    ```
-   *Mẹo: Nếu chưa có Rust trên Windows, backend sẽ tự động chuyển sang chế độ Mock Core (`zeroclaw_core.py`) để kiểm thử UI mà không bị crash.*
+   *Mẹo: Nếu chưa có Rust trên Windows, backend sẽ tự động chuyển sang chế độ giả lập (`autoclaw_mock.py`) để kiểm thử UI mà không bị crash.*
 4. **Tạo cấu hình môi trường**:
    Sao chép file cấu hình mẫu `.env.example` thành `.env` và điền các thông tin của bạn (đặc biệt là API key Gemini và Token Bot Telegram nếu muốn dùng các tính năng AI & điều khiển từ xa):
    * Trên Windows (PowerShell):
@@ -272,7 +272,7 @@ Flask Web Server cung cấp các API RESTful sau để frontend hoặc các ứn
 | :--- | :--- | :--- | :--- | :--- |
 | `/` | `GET` | Không | Trả về trang Web Dashboard chính. | HTML |
 | `/control/<cmd>` | `GET` | `cmd`: `F` (Tiến), `B` (Lùi), `L` (Trái), `R` (Phải), `S` (Dừng), `1` (Xoay servo trái), `2` (Xoay servo phải), `3` (Xoay servo giữa) | Gửi lệnh di chuyển hoặc điều khiển góc quay servo camera xuống Arduino. *Lưu ý: Lệnh `F` sẽ bị bộ lọc Safety Reflex chặn và chuyển thành `S` nếu khoảng cách vật cản < 15cm.* | `{"status": "success", "command": cmd}` |
-| `/auto/<state>` | `GET` | `state`: `off` (Tắt tự lái), `cpp` (Tự lái tránh vật cản C++ trên Arduino), `ai` (AI Agent tự lái sử dụng Gemini Vision) | Thiết lập chế độ lái tự động cho robot. Khi chuyển sang `ai`, Flask sẽ kích hoạt ZeroClaw Agent chạy bằng Rust (gọi `robot.start_agent(api_key)`), chạy ngầm một vòng lặp quyết định Tokio. Khi tắt hoặc đổi chế độ, Flask sẽ gọi `robot.stop_agent()`. | `{"status": "success", "mode": state}` |
+| `/auto/<state>` | `GET` | `state`: `off` (Tắt tự lái), `cpp` (Tự lái tránh vật cản C++ trên Arduino), `ai` (AI Agent tự lái sử dụng Gemini Vision) | Thiết lập chế độ lái tự động cho robot. Khi chuyển sang `ai`, Flask sẽ kích hoạt AutoClaw Agent chạy bằng Rust (gọi `robot.start_agent(api_key)`), chạy ngầm một vòng lặp quyết định Tokio. Khi tắt hoặc đổi chế độ, Flask sẽ gọi `robot.stop_agent()`. | `{"status": "success", "mode": state}` |
 | `/status` | `GET` | Không | Polling thông tin trạng thái xe (khoảng cách hiện tại, chế độ tự lái và log phân tích của AI). Được gọi bởi frontend mỗi 500ms. | `{"distance": "25.4" (hoặc "---"), "auto": "off"/"cpp"/"ai", "ai_log": "..."}` |
 | `/snapshot` | `GET` | Không | Chụp 1 khung hình JPEG tĩnh từ camera Pi trên xe theo yêu cầu. Tự động trả về ảnh giả lập Cyberpunk nếu không kết nối camera. | Ảnh JPEG (mimetype: `image/jpeg`) |
 | `/ai_analyze` | `GET` | Không | Chụp ảnh từ camera, mã hóa Base64 và gửi lên Rust Core để phân tích vật cản và lấy gợi ý hướng đi bằng Gemini API. | `{"status": "success", "image": "data:image/jpeg;base64,...", "description": "...", "command": "..."}` |

@@ -22,7 +22,7 @@ This file outlines the technical system architecture, data flows, and design dec
       },
       "layer_2_backend_flask_rust_core": {
         "responsibility": "Run web endpoints (including /ai_analyze), capture camera snapshots, manage direct hardware serial communication with high safety checks, and host a Telegram Bot on a background daemon thread for remote monitoring/control. Supports a camera device configured via CAMERA_INDEX.",
-        "concurrency_model": "Python Flask handles requests dynamically while delegating the serial device exclusively to the compiled Rust library (zeroclaw_core) via PyO3. If compiled Rust is not present, Flask falls back to zeroclaw_core.py. When vehicle auto mode is set to 'ai', Flask calls `robot.start_agent(api_key)` to launch a background Tokio loop in Rust (`agent::run_agent_loop`) driving the vehicle using the ZeroClaw agent framework and Gemini API.",
+        "concurrency_model": "Python Flask handles requests dynamically while delegating the serial device exclusively to the compiled Rust library (autoclaw_core) via PyO3. If compiled Rust is not present, Flask falls back to autoclaw_mock.py. When vehicle auto mode is set to 'ai', Flask calls `robot.start_agent(api_key)` to launch a background Tokio loop in Rust (`agent::run_agent_loop`) driving the vehicle using the AutoClaw agent framework and Gemini API.",
         "default_configuration": {
           "serial_port": "/dev/ttyACM0",
           "camera_index": 0,
@@ -32,14 +32,14 @@ This file outlines the technical system architecture, data flows, and design dec
           "ai_analyze_flow": "Flask captures current video frame via OpenCV, encodes it to base64, gathers latest ultrasonic distance, and passes both to the core's analyze_scene() method. It returns a JSON structure containing image base64, Vietnamese description, and proposed command."
         },
         "rust_thread_safety": {
-          "structure": "ZeroClaw class",
+          "structure": "AutoClaw class",
           "data_sharing": {
             "port_writer": "Arc<Mutex<Box<dyn SerialPort>>> - Locked briefly inside send_command() / tools to safely push raw byte commands.",
             "latest_distance": "Arc<Mutex<f32>> - Updated by background thread, polled by Flask GET /status and read by agent tools.",
             "latest_mode": "Arc<Mutex<String>> - Cache variable synchronizing vehicle AUTO/MANUAL state."
           },
           "background_reader_thread": "Spawns within new(). Runs a continuous loop using BufReader::read_line() to block until newline (\\n) is encountered, avoiding buffer tearing/partial parse bugs.",
-          "zeroclaw_agent_tools": [
+          "autoclaw_agent_tools": [
             {
               "name": "ControlCarTool",
               "description": "Sends drive command (F, B, L, R, S) down to Arduino with Safety Reflex (overrides F to S if distance < 15cm)"
@@ -126,7 +126,7 @@ This file outlines the technical system architecture, data flows, and design dec
     "telegram_bot": "Bot uses long-polling (not webhooks). If running behind a strict firewall blocking outbound HTTPS to api.telegram.org, the bot will fail to connect. Bot thread is daemon — it will be killed when the main Flask process exits."
   },
   "gemini_vision_ai_integration": {
-    "module": "core/src/gemini.rs (Rust) / zeroclaw_core.py (Python Mock fallback)",
+    "module": "core/src/gemini.rs (Rust) / autoclaw_mock.py (Python Mock fallback)",
     "status": "Active (fully integrated and active)",
     "flow": {
       "input": "Base64 encoded JPEG camera frame + current sonar distance (f32)",
@@ -138,7 +138,7 @@ This file outlines the technical system architecture, data flows, and design dec
         "gesture": "Victory (✌) gesture detected via MediaPipe.",
         "keyboard": "Pressing the 'G' key.",
         "voice": "Vietnamese voice commands ('ai phân tích', 'quét vật cản', 'ai xem trước mặt').",
-        "loop": "Tokio run_agent_loop running continuously on a Rust background thread (ZeroClaw Agent) every 3 seconds when auto mode is 'ai'."
+        "loop": "Tokio run_agent_loop running continuously on a Rust background thread (AutoClaw Agent) every 3 seconds when auto mode is 'ai'."
       },
       "feedback_effects": {
         "camera_panel": "Radar-like scanning scanning animation overlay (.camera-wrap.scanning)",

@@ -15,7 +15,7 @@ const GEMINI_URL: &str =
     "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
 
 const SYSTEM_PROMPT: &str = "\
-Bạn là trợ lý AI phân tích hình ảnh của xe robot ZeroClaw. \
+Bạn là trợ lý AI phân tích hình ảnh của xe robot AutoClaw. \
 Nhìn vào bức ảnh phía trước và đưa ra phân tích theo định dạng JSON sau:
 {
   \"description\": \"Mô tả ngắn gọn vật thể/vật cản chính chắn phía trước bằng tiếng Việt (dưới 15 từ)\",
