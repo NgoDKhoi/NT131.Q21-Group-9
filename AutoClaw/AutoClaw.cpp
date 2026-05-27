@@ -4,18 +4,18 @@
 //  AutoClaw Arduino Firmware - Intelligent Scan Obstacle Avoidance
 // ============================================================
 
-// ── Pin Configuration (Matches README.md) ──────────────────
+// ── Pin Configuration (Matches ELEGOO official sample) ──────
 const int pinENA = 5;   // Motor Left Enable (PWM)
-const int pinIN1 = 4;   // Motor Left Input 1 (Changed from 6 to 4 to avoid GPIO hardware issue)
-const int pinIN2 = 7;   // Motor Left Input 2
+const int pinIN1 = 7;   // Motor Left Input 1
+const int pinIN2 = 8;   // Motor Left Input 2
 
-const int pinENB = 10;  // Motor Right Enable (PWM)
-const int pinIN3 = 8;   // Motor Right Input 1
-const int pinIN4 = 9;   // Motor Right Input 2
+const int pinENB = 6;   // Motor Right Enable (PWM) - Official Pin
+const int pinIN3 = 9;   // Motor Right Input 1
+const int pinIN4 = 11;  // Motor Right Input 2 - Official Pin
 
 const int pinTRIG = 12; // HC-SR04 Trigger Pin
 const int pinECHO = 13; // HC-SR04 Echo Pin
-const int pinSERVO = 11; // SG90 Servo Control Pin
+const int pinSERVO = 10; // SG90 Servo Control Pin (Moved to 10 because 11 is used for IN4)
 
 // ── Servo Configuration ─────────────────────────────────────
 Servo cameraServo;

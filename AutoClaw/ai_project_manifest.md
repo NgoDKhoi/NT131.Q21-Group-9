@@ -27,20 +27,20 @@ This file contains the structured configuration, context, and project informatio
     "arduino_pins": {
       "motor_left": {
         "ENA": 5,
-        "IN1": 4,
-        "IN2": 7
+        "IN1": 7,
+        "IN2": 8
       },
       "motor_right": {
-        "ENB": 10,
-        "IN3": 8,
-        "IN4": 9
+        "ENB": 6,
+        "IN3": 9,
+        "IN4": 11
       },
       "ultrasonic": {
         "TRIG": 12,
         "ECHO": 13
       },
       "servo": {
-        "PIN": 11
+        "PIN": 10
       },
       "serial": {
         "baud_rate": 9600,

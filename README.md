@@ -37,12 +37,10 @@ AutoClaw là một dự án nghiên cứu và phát triển xe robot tự hành 
 5.  **Động cơ Servo SG90**: Xoay cảm biến siêu âm và camera sang Trái/Phải/Giữa.
 6.  **Raspberry Pi Camera Module (hoặc USB Webcam)**: Ghi hình môi trường thực tế trước xe để gửi dữ liệu về cho Gemini Vision AI phân tích.
 
-### Sơ đồ chân cắm Arduino
-```
-Motor Trái   : ENA = chân 5  | IN1 = chân 4  | IN2 = chân 7
-Motor Phải   : ENB = chân 10 | IN3 = chân 8  | IN4 = chân 9
+Motor Trái   : ENA = chân 5  | IN1 = chân 7  | IN2 = chân 8
+Motor Phải   : ENB = chân 6  | IN3 = chân 9  | IN4 = chân 11
 Cảm biến âm  : TRIG = chân 12 | ECHO = chân 13
-Động cơ Servo: PIN = chân 11
+Động cơ Servo: PIN = chân 10
 Giao tiếp    : Cổng USB Serial (9600 baud, chân TX=1, RX=0)
 ```
 
