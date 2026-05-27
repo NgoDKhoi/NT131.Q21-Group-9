@@ -83,10 +83,11 @@ AutoClaw/
 ## 🚀 Hướng dẫn cài đặt và vận hành
 
 ### Yêu cầu hệ thống
-*   **Hệ điều hành**: Raspberry Pi OS (Debian 12 Bookworm hoặc mới hơn) trên Pi 4 / Windows 10/11 trên PC.
+*   **Hệ điều hành**: Raspberry Pi OS (Debian 12 Bookworm / Trixie hoặc mới hơn) trên Pi 4 / Windows 10/11 trên PC.
 *   **Python**: Phiên bản 3.10 đến 3.13.
 *   **Rust & Cargo**: Để biên dịch lõi an toàn `autoclaw_core`.
 *   **Arduino IDE**: Để nạp chương trình lên Arduino Uno R3.
+*   **Thư viện hệ thống (Linux/Pi)**: `libssl-dev`, `pkg-config`, `libudev-dev`, `libopenblas-dev` (xem chi tiết ở Bước 5).
 
 ---
 
@@ -129,11 +130,12 @@ Triển khai thực tế trên xe robot thông qua sự kết hợp giữa **Ras
    *(Thay đổi `pi` thành username của Pi nếu bạn đặt tên khác).*
 
 ##### Bước 5: Cài đặt các thư viện hệ thống cần thiết qua APT
-Sau khi đã kết nối SSH thành công vào Pi 4, chạy lệnh cài đặt các package phát triển cần thiết cho OpenCV và các dependencies:
+Sau khi đã kết nối SSH thành công vào Pi 4, chạy lệnh cài đặt các package phát triển cần thiết cho OpenCV, OpenSSL (yêu cầu bởi Rust crate `reqwest`), libudev (yêu cầu bởi crate `serialport`) và các dependencies khác:
 ```bash
 sudo apt update
-sudo apt install -y build-essential libopenblas-dev libjpeg-dev libtiff-dev libpng-dev
+sudo apt install -y build-essential pkg-config libssl-dev libudev-dev libopenblas-dev libjpeg-dev libtiff-dev libpng-dev
 ```
+> **Lưu ý:** `libssl-dev` + `pkg-config` là **bắt buộc** cho crate `reqwest` → `openssl-sys`. `libudev-dev` là **bắt buộc** cho crate `serialport` → `libudev-sys`. Nếu thiếu bất kỳ package nào, `maturin develop` sẽ báo lỗi build.
 
 ##### Bước 6: Tải mã nguồn và thiết lập Môi trường ảo Python (venv)
 Để tránh lỗi chặn cài thư viện toàn cục (`externally-managed-environment`) trên Debian, khởi tạo môi trường ảo Python trong thư mục dự án:
@@ -163,7 +165,11 @@ pip install -r requirements.txt
    ```bash
    source $HOME/.cargo/env
    ```
-3. Biên dịch lõi an toàn `autoclaw_core` bằng Maturin:
+3. **Kiểm tra lại** đã cài đủ thư viện hệ thống (Bước 5), đặc biệt `libssl-dev` và `pkg-config`:
+   ```bash
+   pkg-config --libs openssl   # Phải trả về "-lssl -lcrypto", nếu báo lỗi thì quay lại Bước 5
+   ```
+4. Biên dịch lõi an toàn `autoclaw_core` bằng Maturin:
    ```bash
    cd core
    maturin develop --release
