@@ -27,7 +27,7 @@ This file contains the structured configuration, context, and project informatio
     "arduino_pins": {
       "motor_left": {
         "ENA": 5,
-        "IN1": 6,
+        "IN1": 4,
         "IN2": 7
       },
       "motor_right": {

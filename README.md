@@ -39,7 +39,7 @@ AutoClaw là một dự án nghiên cứu và phát triển xe robot tự hành 
 
 ### Sơ đồ chân cắm Arduino
 ```
-Motor Trái   : ENA = chân 5  | IN1 = chân 6  | IN2 = chân 7
+Motor Trái   : ENA = chân 5  | IN1 = chân 4  | IN2 = chân 7
 Motor Phải   : ENB = chân 10 | IN3 = chân 8  | IN4 = chân 9
 Cảm biến âm  : TRIG = chân 12 | ECHO = chân 13
 Động cơ Servo: PIN = chân 11

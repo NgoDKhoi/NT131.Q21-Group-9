@@ -6,7 +6,7 @@
 
 // ── Pin Configuration (Matches README.md) ──────────────────
 const int pinENA = 5;   // Motor Left Enable (PWM)
-const int pinIN1 = 6;   // Motor Left Input 1
+const int pinIN1 = 4;   // Motor Left Input 1 (Changed from 6 to 4 to avoid GPIO hardware issue)
 const int pinIN2 = 7;   // Motor Left Input 2
 
 const int pinENB = 10;  // Motor Right Enable (PWM)
@@ -64,6 +64,9 @@ int consecutiveObstacleCount = 0;          // Bộ đếm chống nhiễu cảm 
 void moveForward(int speed) {
   analogWrite(pinENA, speed);
   analogWrite(pinENB, speed);
+  // Nếu bánh trái chỉ chạy khi IN1=LOW, IN2=HIGH (đã chạy tốt ở lệnh B),
+  // ta đổi logic Tiến của bánh trái trùng với logic lùi cũ nhưng đổi phân cực động cơ nếu bị ngược chiều,
+  // hoặc thiết lập đúng trạng thái HIGH/LOW để cả 2 bên cùng tiến.
   digitalWrite(pinIN1, HIGH);
   digitalWrite(pinIN2, LOW);
   digitalWrite(pinIN3, LOW);
