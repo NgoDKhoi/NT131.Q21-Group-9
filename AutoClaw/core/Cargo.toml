@@ -9,7 +9,7 @@ crate-type = ["cdylib"]   # Bắt buộc để Maturin build thành .so cho Pyth
 
 [dependencies]
 # PyO3: Python-Rust bridge
-pyo3 = { version = "0.21", features = ["extension-module"] }
+pyo3 = { version = "0.22", features = ["extension-module"] }
 
 # Serial port I/O (thay thế pyserial hoàn toàn)
 serialport = "4.3.0"

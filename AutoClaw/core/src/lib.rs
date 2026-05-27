@@ -247,7 +247,7 @@ impl AutoClaw {
 
 /// PyO3 module entry point
 #[pymodule]
-fn autoclaw_core(_py: Python, m: &PyModule) -> PyResult<()> {
+fn autoclaw_core(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<AutoClaw>()?;
     Ok(())
 }
