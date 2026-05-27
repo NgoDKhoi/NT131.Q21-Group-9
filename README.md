@@ -132,7 +132,7 @@ Triển khai thực tế trên xe robot thông qua sự kết hợp giữa **Ras
 Sau khi đã kết nối SSH thành công vào Pi 4, chạy lệnh cài đặt các package phát triển cần thiết cho OpenCV và các dependencies:
 ```bash
 sudo apt update
-sudo apt install -y build-essential libatlas-base-dev libjpeg-dev libtiff5-dev libpng-dev
+sudo apt install -y build-essential libopenblas-dev libjpeg-dev libtiff-dev libpng-dev
 ```
 
 ##### Bước 6: Tải mã nguồn và thiết lập Môi trường ảo Python (venv)
