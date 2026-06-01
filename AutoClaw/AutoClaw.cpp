@@ -19,9 +19,9 @@ const int pinSERVO = 3;  // SG90 Servo Control Pin (Connected to Pin 3)
 
 // ── Servo Configuration ─────────────────────────────────────
 Servo cameraServo;
-const int angleLeft   = 0;
+const int angleLeft   = 30; // 60 degrees left from center (90 - 60 = 30)
 const int angleCenter = 90;
-const int angleRight  = 180;
+const int angleRight  = 150; // 60 degrees right from center (90 + 60 = 150)
 
 // ── Robot Speed Configuration ───────────────────────────────
 const int speedForward = 140; // Reduced from 180 for better stability and response time
@@ -249,7 +249,7 @@ void updateAutoDrive() {
       break;
 
     case AUTO_SCAN_RIGHT:
-      if (now - stateStartTime >= 700) { // Wait 700ms for full sweep to 180 degrees and settle
+      if (now - stateStartTime >= 700) { // Wait 700ms for sweep to 150 degrees (right side) and settle
         distanceRight = currentDistance; // Record right distance
         safeServoWrite(angleCenter);  // Return to center
         currentAutoState = AUTO_SCAN_DECIDE;
