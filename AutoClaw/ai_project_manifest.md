@@ -36,8 +36,8 @@ This file contains the structured configuration, context, and project informatio
         "IN4": 11
       },
       "ultrasonic": {
-        "TRIG": 12,
-        "ECHO": 3
+        "TRIG": "A5",
+        "ECHO": "A4"
       },
       "servo": {
         "PIN": 10

@@ -39,7 +39,7 @@ AutoClaw là một dự án nghiên cứu và phát triển xe robot tự hành 
 
 Motor Trái   : ENA = chân 5  | IN1 = chân 7  | IN2 = chân 8
 Motor Phải   : ENB = chân 6  | IN3 = chân 9  | IN4 = chân 11
-Cảm biến âm  : TRIG = chân 12 | ECHO = chân 3
+Cảm biến âm  : TRIG = chân A5 | ECHO = chân A4
 Động cơ Servo: PIN = chân 10
 Giao tiếp    : Cổng USB Serial (9600 baud, chân TX=1, RX=0)
 ```
