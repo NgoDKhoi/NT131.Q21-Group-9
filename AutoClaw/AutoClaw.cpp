@@ -24,8 +24,7 @@ const int angleCenter = 90;
 const int angleRight  = 150; // 60 degrees right from center (90 + 60 = 150)
 
 // ── Robot Speed Configuration ───────────────────────────────
-const int speedForward  = 220; // Speed for forward movement
-const int speedBackward = 220; // Speed for backward movement
+const int speedForward  = 220; // Speed for forward and backward movement
 const int speedTurn     = 220; // Speed for turning maneuvers
 
 // ── State Management ────────────────────────────────────────
@@ -159,7 +158,7 @@ void handleSerialCommands() {
         if (currentMode == MODE_MANUAL) moveForward(speedForward);
         break;
       case 'B':
-        if (currentMode == MODE_MANUAL) moveBackward(speedBackward);
+        if (currentMode == MODE_MANUAL) moveBackward(speedForward);
         break;
       case 'L':
         if (currentMode == MODE_MANUAL) turnLeft(speedTurn);
@@ -263,7 +262,7 @@ void updateAutoDrive() {
         // Compare distances and choose direction
         if (distanceLeft <= safeDistanceThreshold && distanceRight <= safeDistanceThreshold) {
           // Both sides blocked, back up and then turn right
-          moveBackward(speedBackward);
+          moveBackward(speedForward);
           currentAutoState = AUTO_BACKUP;
           stateStartTime = now;
         } else if (distanceLeft > distanceRight) {
