@@ -113,8 +113,8 @@ void stopMotors() {
 void safeServoWrite(int angle) {
   cameraServo.attach(pinSERVO);
   cameraServo.write(angle);
-  delay(150); // Small blocking delay just to let the servo start its movement
-  cameraServo.detach(); // Immediately detach to release Timer 1
+  delay(350); // Allow sufficient time (350ms) for SG90 servo to complete its physical rotation (max 180 deg)
+  cameraServo.detach(); // Detach to release Timer 1 so it doesn't block ultrasonic pulseIn readings
 }
 
 float measureDistance() {
@@ -329,10 +329,7 @@ void setup() {
   pinMode(pinECHO, INPUT);
 
   // Initialize camera servo SG90
-  cameraServo.attach(pinSERVO);
-  safeServoWrite(angleCenter);
-  delay(150);
-  cameraServo.detach(); // Detach initially to prevent interference during startup
+  safeServoWrite(angleCenter); // safeServoWrite internally handles attach, write, delay, and detach safely
 
   // Stop motors initially
   stopMotors();

@@ -68,7 +68,8 @@ class AutoClawMock:
             "Nhìn vào bức ảnh phía trước và đưa ra phân tích theo định dạng JSON sau:\n"
             "{\n"
             '  "description": "Mô tả ngắn gọn vật thể/vật cản chính chắn phía trước bằng tiếng Việt (dưới 15 từ)",\n'
-            '  "command": "Lệnh di chuyển đề xuất: \'F\' (Tiến nếu thoáng), \'B\' (Lùi nếu bị chặn sát), \'L\' (Rẽ trái), \'R\' (Rẽ phải), \'S\' (Dừng lại)"\n'
+            '  "command": "Lệnh di chuyển đề xuất: \'F\' (Tiến nếu thoáng), \'B\' (Lùi nếu bị chặn sát), \'L\' (Rẽ trái), \'R\' (Rẽ phải), \'S\' (Dừng lại)",\n'
+            '  "reason": "Lý do ngắn gọn bằng tiếng Việt tại sao bạn đề xuất lệnh lái này (dưới 15 từ)"\n'
             "}\n"
             "Lưu ý: Chỉ trả về chuỗi JSON hợp lệ, không thêm bất kỳ văn bản giải thích nào khác ngoài JSON. Không bọc trong dấu nháy ```json."
         )
