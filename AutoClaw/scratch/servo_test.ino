@@ -5,7 +5,7 @@
 #include <Servo.h>
 
 Servo testServo;
-const int pinSERVO = 10; // Chân Servo (Cổng số 10 trên Arduino Uno)
+const int pinSERVO = 3; // Chân Servo (Cổng số 3 trên Arduino Uno)
 
 void setup() {
   Serial.begin(9600);
@@ -16,7 +16,7 @@ void setup() {
   delay(500);
   
   Serial.println("--- BẮT ĐẦU TEST ĐỘNG CƠ SERVO SG90 ---");
-  Serial.println("Đấu nối dây: Dây tín hiệu (Cam/Vàng) -> Chân 10");
+  Serial.println("Đấu nối dây: Dây tín hiệu (Cam/Vàng) -> Chân 3");
   Serial.println("Nhập các phím sau trên Serial Monitor (chọn No line ending hoặc Both NL & CR):");
   Serial.println("  L : Xoay sang Trái (0 độ)");
   Serial.println("  R : Xoay sang Phải (180 độ)");

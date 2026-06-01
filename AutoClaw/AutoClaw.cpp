@@ -15,7 +15,7 @@ const int pinIN4 = 11;  // Motor Right Input 2 - Official Pin
 
 const int pinTRIG = A5; // HC-SR04 Trigger Pin (Connected to A5 on shield)
 const int pinECHO = A4; // HC-SR04 Echo Pin (Connected to A4 on shield)
-const int pinSERVO = 10; // SG90 Servo Control Pin (Moved to 10 because 11 is used for IN4)
+const int pinSERVO = 3;  // SG90 Servo Control Pin (Connected to Pin 3)
 
 // ── Servo Configuration ─────────────────────────────────────
 Servo cameraServo;

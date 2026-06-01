@@ -64,7 +64,7 @@ Tài liệu này ghi lại chi tiết các sự cố phần cứng, phần mềm
   * `ENA` = chân **5** | `ENB` = chân **6**
   * `IN1` = chân **7** | `IN2` = chân **8**
   * `IN3` = chân **9** | `IN4` = chân **11**
-  * Chuyển chân điều khiển động cơ Servo SG90 sang chân **10** (để tránh trùng lặp chân 11 của `IN4`).
+  * Chuyển chân điều khiển động cơ Servo SG90 sang chân **3** (phù hợp với vị trí cắm thực tế của Servo trên bo mạch mở rộng của xe).
 
 ---
 
@@ -72,8 +72,9 @@ Tài liệu này ghi lại chi tiết các sự cố phần cứng, phần mềm
 ### 5. Sự cố 5: Cảm biến siêu âm HC-SR04 luôn trả về khoảng cách tối đa 999.0 cm
 * **Triệu chứng:** Xe chạy bình thường nhưng cảm biến siêu âm luôn báo khoảng cách `999.0` (tương đương với timeout không nhận được xung Echo) ngay cả khi có vật cản sát phía trước.
 * **Nguyên nhân:** 
-  1. *Đấu sai chân cắm:* Bo mạch mở rộng mở rộng (Sensor Shield) của kit ELEGOO định tuyến sẵn các đường tín hiệu của cảm biến siêu âm về hai chân analog **A5** (đóng vai trò chân Trigger) và **A4** (đóng vai trò chân Echo), trong khi code cũ định nghĩa chân 12 và 13.
+  1. *Đấu sai chân cắm:* Bo mạch mở rộng (Sensor Shield) của kit ELEGOO định tuyến sẵn các đường tín hiệu của cảm biến siêu âm về hai chân analog **A5** (đóng vai trò chân Trigger) và **A4** (đóng vai trò chân Echo), trong khi code cũ định nghĩa chân 12 và 13.
   2. *Nhiễu ngắt của thư viện Servo:* Thư viện `Servo.h` mặc định liên tục kích hoạt ngắt phần cứng trên Timer 1 của Arduino để giữ vị trí góc quay, gây xung đột và làm sai lệch phép đo đạc thời gian của hàm `pulseIn()` dùng cho siêu âm.
+  3. *Tranh chấp chân vật lý:* Có thời điểm chân Echo định cấu hình sang chân 3 để tránh nhiễu LED chân 13, nhưng chân 3 đã được cắm sẵn cho dây điều khiển Servo thực tế, dẫn đến xung đột chéo.
 * **Giải pháp:**
-  * Sửa lại chân cắm trong code [AutoClaw.cpp](file:///c:/Users/khoi1/MyRepo/NT131.Q21-Group-9/AutoClaw/AutoClaw.cpp) thành: `pinTRIG = A5` và `pinECHO = A4`.
+  * Sửa lại chân cắm trong code [AutoClaw.cpp](file:///c:/Users/khoi1/MyRepo/NT131.Q21-Group-9/AutoClaw/AutoClaw.cpp) thành: `pinTRIG = A5`, `pinECHO = A4`, và trả lại chân Servo `pinSERVO = 3`.
   * Viết hàm điều khiển Servo an toàn `safeServoWrite()`: Thực hiện `attach` servo tạm thời khi cần xoay và gọi `detach()` giải phóng Timer ngay sau khi xoay xong để triệt tiêu nhiễu ngắt phần cứng, bảo vệ độ chính xác cho hàm đo khoảng cách siêu âm.

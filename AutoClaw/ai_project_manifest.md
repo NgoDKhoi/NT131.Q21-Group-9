@@ -40,7 +40,7 @@ This file contains the structured configuration, context, and project informatio
         "ECHO": "A4"
       },
       "servo": {
-        "PIN": 10
+        "PIN": 3
       },
       "serial": {
         "baud_rate": 9600,
