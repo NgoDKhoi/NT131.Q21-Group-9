@@ -123,13 +123,23 @@ def init_camera() -> bool:
             camera.set(cv2.CAP_PROP_FRAME_HEIGHT, CAMERA_HEIGHT)
             camera.set(cv2.CAP_PROP_FPS,          CAMERA_FPS)
 
-        # Warm-up: đọc vài frame đầu để sensor ổn định
+        # Warm-up: đọc vài frame đầu để sensor ổn định.
+        # Nếu đọc thất bại (lỗi tương thích V4L2/Libcamera trên Bookworm), giải phóng camera ngay để nhả cổng Serial/Video
         for _ in range(3):
-            camera.read()
+            ok, _ = camera.read()
+            if not ok:
+                logger.warning("⚠ OpenCV không thể đọc frame từ camera trong quá trình warm-up. Giải phóng cổng camera để dùng rpicam-still dự phòng.")
+                camera.release()
+                camera = None
+                return False
+
         logger.info(f"✅ Camera: {CAMERA_WIDTH}x{CAMERA_HEIGHT} @ {CAMERA_FPS}fps")
         return True
     except Exception as e:
         logger.error(f"❌ Camera error: {e}")
+        if camera is not None:
+            camera.release()
+            camera = None
         return False
 
 # ══════════════════════════════════════════════════════════════
@@ -200,9 +210,25 @@ def get_camera_frame():
             ok, read_frame = camera.read()
             if ok:
                 frame = read_frame
-            else:
-                logger.warning("⚠ Camera read failed, using mock frame instead")
-                
+
+    # Nếu OpenCV camera lỗi hoặc không khả dụng, thực hiện chụp bằng rpicam-still làm dự phòng (chỉ áp dụng trên Linux)
+    if frame is None and os.name != "nt":
+        import subprocess
+        try:
+            temp_path = "static/temp_snapshot.jpg"
+            # rpicam-still: chụp ảnh nhanh mà không tạo preview window
+            subprocess.run([
+                "rpicam-still", "-t", "100", "--immediate", "-n",
+                "-o", temp_path, "--width", str(CAMERA_WIDTH), "--height", str(CAMERA_HEIGHT)
+            ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=4)
+            
+            if os.path.exists(temp_path):
+                frame = cv2.imread(temp_path)
+                os.remove(temp_path)
+        except Exception as e:
+            logger.error(f"❌ Fallback rpicam-still failed: {e}")
+
+    # Fallback cuối cùng nếu cả hai đều lỗi
     if frame is None:
         import numpy as np
         import time
@@ -212,6 +238,7 @@ def get_camera_frame():
         ts_str = time.strftime("%H:%M:%S")
         cv2.putText(frame, f"TIME: {ts_str}", (50, 160), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 207, 0), 1)
         cv2.drawMarker(frame, (160, 120), (0, 0, 255), cv2.MARKER_CROSS, 20, 2)
+        logger.warning("⚠ Camera read failed, using mock frame instead")
     return frame
 
 def get_camera_frame_base64() -> str:
