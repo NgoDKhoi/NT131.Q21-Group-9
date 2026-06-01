@@ -58,40 +58,12 @@ Tài liệu này tổng hợp các câu hỏi chuyên sâu mà Hội đồng ph�
     4. Gemini phân tích ngữ cảnh (ví dụ: "Trước mặt là một chiếc hộp các-tông ở cự ly 25cm, bên phải trống") và đề xuất hướng lái tối ưu tránh vật cản bằng tiếng Việt (dưới 15 từ) cùng lệnh điều hướng đi kèm.
     5. Agent tự động thực thi lệnh đó thông qua **ControlCarTool**.
 
-### Q6: Làm sao để đảm bảo xe không bị đâm vào tường khi đang đợi API Gemini phản hồi (thường mất 1-2 giây)?
-* **Trả lời:** Đây là điểm mấu chốt của tính năng an toàn nhiều lớp trong đồ án của nhóm:
-  * Trong lúc chờ API Gemini phân tích ảnh và trả về lệnh lái, xe vẫn liên tục di chuyển tiến. 
-  * Tuy nhiên, nếu khoảng cách đột ngột giảm xuống dưới $15\text{ cm}$, lõi an toàn **Safety Reflex** bằng Rust (ở tầng dưới) sẽ ngay lập tức kích hoạt, chặn đứng lệnh đi tiếp và ép dừng xe mà không cần đợi kết quả phân tích của Gemini. Điều này ngăn chặn việc xe đâm vào vật cản do độ trễ mạng hoặc độ trễ xử lý của mô hình AI.
-
----
-
-<a name="nhóm-4"></a>
-## 🔌 Nhóm 4: Điều khiển Phần cứng & Xử lý Tín hiệu (Arduino)
-
 ### Q7: Thuật toán trên Arduino tự động lọc nhiễu tín hiệu siêu âm như thế nào để tránh xe phanh ảo?
 * **Trả lời:** Cảm biến siêu âm HC-SR04 thường bị nhiễu do sóng phản xạ góc chéo hoặc nhiễu điện từ động cơ (xuất hiện các phép đo sai lệch cực ngắn $0$ hoặc dưới $15\text{ cm}$).
   * Trong hàm `updateAutoDrive()`, nhóm triển khai một bộ lọc tích lũy trạng thái (State Accumulator) thông qua biến `consecutiveObstacleCount`.
   * Xe chỉ xác nhận có vật cản và dừng lại khi khoảng cách đo được nhỏ hơn ngưỡng an toàn trong **ít nhất 2 chu kỳ đo liên tiếp** (mỗi chu kỳ cách nhau 50ms, tương đương tổng thời gian xác nhận là 100ms). Nếu chỉ có 1 chu kỳ báo khoảng cách nhỏ rồi chu kỳ sau bình thường, bộ lọc sẽ tự động reset về `0` và coi đó là nhiễu xung động.
 
-### Q8: Cơ chế điều khiển Servo tránh vật cản của nhóm được thiết kế như thế nào để không gây xung đột với cảm biến siêu âm?
-* **Trả lời:** Thư viện `Servo.h` trên Arduino Uno sử dụng ngắt cứng của Timer 1. Ngắt này xảy ra liên tục để duy trì góc quay của servo, gây nhiễu nghiêm trọng cho hàm `pulseIn()` (đo độ rộng xung phản hồi của siêu âm), khiến cảm biến luôn báo lỗi timeout (`999.0` cm).
-  * **Giải pháp phần mềm:** Nhóm thiết kế hàm an toàn `safeServoWrite()`. Hàm này chỉ `attach()` servo vào chân điều khiển khi cần thay đổi góc quay, ghi góc mới (`write()`), chờ một khoảng ngắn cho servo dịch chuyển vật lý, và lập tức `detach()` servo để giải phóng hoàn toàn Timer 1, trả lại môi trường sạch không ngắt cho cảm biến siêu âm đo đạc.
 
----
-
-<a name="nhóm-5"></a>
-## 🌐 Nhóm 5: Các phương thức điều khiển Đa phương thức
-
-### Q9: Làm cách nào nhóm truyền hình ảnh từ xe lên trình duyệt và Telegram Bot mà không làm nghẽn băng thông của Raspberry Pi 4?
-* **Trả lời:** Nhóm không sử dụng cơ chế truyền phát video liên tục (Video Streaming MJPEG) vì nó tiêu tốn từ 5 - 10 Mbps băng thông mạng, gây nghẽn vi xử lý và làm trễ các lệnh điều khiển thời gian thực.
-  * Thay vào đó, nhóm áp dụng kiến trúc **Snapshot-on-Demand** (Chụp ảnh theo yêu cầu): 
-    * Trên web dashboard, camera chỉ chụp 1 khung hình tĩnh khi người dùng yêu cầu phân tích AI (phím `G` hoặc cử chỉ Victory).
-    * Trên Telegram Bot, camera chỉ chụp và gửi ảnh khi người dùng gõ lệnh `/snapshot`.
-  * Phương pháp này tiết kiệm đến **99%** băng thông mạng LAN và giảm tải xử lý CPU trên Raspberry Pi xuống mức tối thiểu (dưới 5%).
-
-### Q10: Tại sao tính năng Nhận diện cử chỉ bàn tay (MediaPipe) và Giọng nói (Web Speech API) chỉ hoạt động qua kết nối HTTPS bảo mật hoặc localhost?
-* **Trả lời:** Đây là chính sách bảo mật bắt buộc của các trình duyệt hiện đại (Chrome, Edge, Safari) nhằm bảo vệ quyền riêng tư của người dùng. Các API truy cập phần cứng nhạy cảm như Camera (getUserMedia) và Microphone (SpeechRecognition) **chỉ được cấp quyền chạy** trong môi trường bảo mật (Secure Contexts), bao gồm địa chỉ `localhost` hoặc các tên miền sử dụng giao thức mã hóa **HTTPS**.
-  * Để chạy thực tế trên Raspberry Pi qua mạng Wi-Fi của phòng Lab/LAN, nhóm đã tích hợp công cụ **Ngrok** để tạo một đường truyền bảo mật (tunnel) HTTPS hướng ngoại. Trình duyệt client truy cập qua link ngrok này sẽ được cấp đầy đủ quyền sử dụng Camera và Micro để điều khiển xe từ xa.
 
 ### Q13: Mô tả luồng hoạt động chi tiết của tính năng điều khiển xe bằng cử chỉ tay (MediaPipe)?
 * **Trả lời:** Luồng xử lý cử chỉ tay hoạt động theo mô hình xử lý phân tán **Edge-Client** để tối ưu hiệu năng:
