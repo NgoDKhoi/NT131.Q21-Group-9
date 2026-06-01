@@ -11,6 +11,7 @@ Tài liệu này tổng hợp các câu hỏi chuyên sâu mà Hội đồng ph�
 * [Nhóm 3: Vòng lặp Quyết định Tự trị của AI Agent (Gemini API)](#nhóm-3)
 * [Nhóm 4: Điều khiển Phần cứng & Xử lý Tín hiệu (Arduino)](#nhóm-4)
 * [Nhóm 5: Các phương thức điều khiển Đa phương thức (Voice, Gesture, Telegram)](#nhóm-5)
+* [Nhóm 6: Các lỗi kỹ thuật và sự cố phần cứng/phần mềm thực tế đã vượt qua](#nhóm-6)
 
 ---
 
@@ -91,3 +92,27 @@ Tài liệu này tổng hợp các câu hỏi chuyên sâu mà Hội đồng ph�
 ### Q10: Tại sao tính năng Nhận diện cử chỉ bàn tay (MediaPipe) và Giọng nói (Web Speech API) chỉ hoạt động qua kết nối HTTPS bảo mật hoặc localhost?
 * **Trả lời:** Đây là chính sách bảo mật bắt buộc của các trình duyệt hiện đại (Chrome, Edge, Safari) nhằm bảo vệ quyền riêng tư của người dùng. Các API truy cập phần cứng nhạy cảm như Camera (getUserMedia) và Microphone (SpeechRecognition) **chỉ được cấp quyền chạy** trong môi trường bảo mật (Secure Contexts), bao gồm địa chỉ `localhost` hoặc các tên miền sử dụng giao thức mã hóa **HTTPS**.
   * Để chạy thực tế trên Raspberry Pi qua mạng Wi-Fi của phòng Lab/LAN, nhóm đã tích hợp công cụ **Ngrok** để tạo một đường truyền bảo mật (tunnel) HTTPS hướng ngoại. Trình duyệt client truy cập qua link ngrok này sẽ được cấp đầy đủ quyền sử dụng Camera và Micro để điều khiển xe từ xa.
+
+---
+
+<a name="nhóm-6"></a>
+## 🛠️ Nhóm 6: Lỗi kỹ thuật và Sự cố thực tế đã vượt qua
+
+### Q11: Trong quá trình triển khai thực tế, nhóm đã gặp những sự cố phần cứng nào khó khăn nhất và giải quyết ra sao?
+* **Trả lời:** Có hai sự cố phần cứng tiêu biểu mà nhóm đã giải quyết triệt để:
+  1. **Lỗi sụt áp nguồn & Nhiễu ngắt của Servo:** Ban đầu, khi xe đang chạy thẳng ở chế độ tự động và gặp vật cản, cảm biến siêu âm liên tục báo khoảng cách giả định `999.0` cm khiến xe đâm vào vật cản. 
+     * *Nguyên nhân:* Thư viện `Servo.h` trên Arduino Uno liên tục chạy ngắt phần cứng trên Timer 1 để giữ góc cho động cơ servo SG90, gây nhiễu cho hàm đo xung thời gian `pulseIn()` của cảm biến siêu âm. 
+     * *Giải pháp:* Nhóm đã viết hàm điều khiển an toàn `safeServoWrite()`. Hàm này chỉ kết nối (`attach`) servo khi cần thay đổi góc quay, và ngay sau đó gọi ngắt kết nối (`detach`) để trả lại môi trường không có ngắt cho cảm biến siêu âm đo đạc chính xác.
+  2. **Lỗi GPIO phần cứng của Arduino:** Có thời điểm động cơ bên trái của xe không thể tiến hoặc xoay phải được dù lệnh lùi vẫn tốt.
+     * *Nguyên nhân:* Chân GPIO số 6 trên bo mạch Arduino Uno bị hỏng vật lý phần cứng ở trạng thái xuất điện áp mức cao (`HIGH`).
+     * *Giải pháp:* Nhóm đã cấu hình lại firmware chuyển chân tín hiệu `IN1` điều khiển động cơ bên trái từ chân số **6** sang chân số **4** để dự phòng cổng ra, giúp xe hoạt động bình thường mà không cần thay bo Arduino mới.
+  3. **Lỗi cắm sai chân cảm biến trên Shield mở rộng:** 
+     * *Nguyên nhân:* Mạch mở rộng (Sensor Shield V5) của xe tự động định tuyến chân TRIG và ECHO của siêu âm về cổng **A5** và **A4**, trong khi mã nguồn cũ mặc định cấu hình chân 12 và 13.
+     * *Giải pháp:* Nhóm đã cập nhật lại cấu hình chân của siêu âm trong firmware khớp hoàn toàn với thiết kế mạch in của ELEGOO: `pinTRIG = A5`, `pinECHO = A4`, và chân tín hiệu Servo về cổng số **3**.
+
+### Q12: Về mặt phần mềm và biên dịch hệ thống, nhóm đã giải quyết xung đột gì khi deploy trên Raspberry Pi 4?
+* **Trả lời:** 
+  1. **Lỗi không tương thích Python 3.13 trên Raspberry Pi OS mới:** Lõi Rust ban đầu sử dụng PyO3 v0.21 không tương thích với Python 3.13 (gây lỗi biên dịch `maturin develop`). Nhóm đã nâng cấp PyO3 lên phiên bản **v0.22** và cấu hình lại API `#[pymodule]` để hỗ trợ trơn tru Python 3.13.
+  2. **Lỗi định dạng ngắt dòng (CRLF vs LF):** File `Cargo.toml` viết trên Windows khi chuyển lên Linux gặp lỗi cú pháp TOML do ký tự ngắt dòng ẩn `\r` (CR). Nhóm đã chuẩn hóa toàn bộ mã nguồn sang ngắt dòng **LF** và bổ sung cấu hình **`.gitattributes`** để ngăn ngừa lỗi này lặp lại trong tương lai.
+  3. **Thiếu thư viện hệ thống khi build reqwest:** Hệ thống thiếu gói OpenSSL và udev headers (`libssl-dev`, `libudev-dev`, `pkg-config`). Nhóm đã cài đặt bổ sung các package này từ kho APT của Debian để quá trình biên dịch liên kết thư viện tĩnh thành công.
+
