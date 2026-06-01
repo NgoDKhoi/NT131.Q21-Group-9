@@ -127,16 +127,13 @@ Tài liệu này tổng hợp các câu hỏi chuyên sâu mà Hội đồng ph�
 ## 🛠️ Nhóm 6: Lỗi kỹ thuật và Sự cố thực tế đã vượt qua
 
 ### Q11: Trong quá trình triển khai thực tế, nhóm đã gặp những sự cố phần cứng nào khó khăn nhất và giải quyết ra sao?
-* **Trả lời:** Có hai sự cố phần cứng tiêu biểu mà nhóm đã giải quyết triệt để:
-  1. **Lỗi sụt áp nguồn & Nhiễu ngắt của Servo:** Ban đầu, khi xe đang chạy thẳng ở chế độ tự động và gặp vật cản, cảm biến siêu âm liên tục báo khoảng cách giả định `999.0` cm khiến xe đâm vào vật cản. 
-     * *Nguyên nhân:* Thư viện `Servo.h` trên Arduino Uno liên tục chạy ngắt phần cứng trên Timer 1 để giữ góc cho động cơ servo SG90, gây nhiễu cho hàm đo xung thời gian `pulseIn()` của cảm biến siêu âm. 
-     * *Giải pháp:* Nhóm đã viết hàm điều khiển an toàn `safeServoWrite()`. Hàm này chỉ kết nối (`attach`) servo khi cần thay đổi góc quay, và ngay sau đó gọi ngắt kết nối (`detach`) để trả lại môi trường không có ngắt cho cảm biến siêu âm đo đạc chính xác.
-  2. **Lỗi GPIO phần cứng của Arduino:** Có thời điểm động cơ bên trái của xe không thể tiến hoặc xoay phải được dù lệnh lùi vẫn tốt.
-     * *Nguyên nhân:* Chân GPIO số 6 trên bo mạch Arduino Uno bị hỏng vật lý phần cứng ở trạng thái xuất điện áp mức cao (`HIGH`).
-     * *Giải pháp:* Nhóm đã cấu hình lại firmware chuyển chân tín hiệu `IN1` điều khiển động cơ bên trái từ chân số **6** sang chân số **4** để dự phòng cổng ra, giúp xe hoạt động bình thường mà không cần thay bo Arduino mới.
-  3. **Lỗi cắm sai chân cảm biến trên Shield mở rộng:** 
-     * *Nguyên nhân:* Mạch mở rộng (Sensor Shield V5) của xe tự động định tuyến chân TRIG và ECHO của siêu âm về cổng **A5** và **A4**, trong khi mã nguồn cũ mặc định cấu hình chân 12 và 13.
-     * *Giải pháp:* Nhóm đã cập nhật lại cấu hình chân của siêu âm trong firmware khớp hoàn toàn với thiết kế mạch in của ELEGOO: `pinTRIG = A5`, `pinECHO = A4`, và chân tín hiệu Servo về cổng số **3**.
+* **Trả lời:** Sự cố phần cứng lớn nhất của nhóm chủ yếu xoay quanh việc **khai báo sai lệch chân cắm điều khiển trong mã nguồn so với cách đấu nối dây vật lý thực tế của kit xe ELEGOO**:
+  1. **Lỗi điều khiển động cơ (Bánh bên trái không hoạt động khi đi Tiến/Rẽ phải):**
+     * *Nguyên nhân:* Sơ đồ chân động cơ ban đầu định nghĩa sai so với mạch cầu H L298N trên kit xe. Chân Enable của động cơ phải cắm chân 6 nhưng code khai báo chân 10, các chân logic IN1, IN2 cắm sai dẫn đến việc phân cực sai lệch.
+     * *Giải pháp:* Nhóm đã rà soát và cấu hình lại toàn bộ chân động cơ trong firmware `AutoClaw.cpp` chuẩn theo ELEGOO: `ENA=5`, `IN1=7`, `IN2=8` (cho động cơ trái) và `ENB=6`, `IN3=9`, `IN4=11` (cho động cơ phải).
+  2. **Lỗi cảm biến siêu âm luôn báo khoảng cách tối đa 999.0 cm và Servo không xoay:**
+     * *Nguyên nhân:* Trên mạch mở rộng (Sensor Shield), các đường mạch in của cảm biến siêu âm được định tuyến mặc định về hai chân analog **A5** (Trigger) và **A4** (Echo), còn Servo cắm ở chân **3**. Tuy nhiên, code cũ khai báo chân Trigger/Echo là 12/13 và Servo chân 10, khiến vi điều khiển phát xung điều khiển ra các chân trống.
+     * *Giải pháp:* Điều chỉnh khai báo chân trong code khớp hoàn toàn với thiết kế mạch thực tế của kit xe: `pinTRIG = A5`, `pinECHO = A4`, và `pinSERVO = 3` mà không cần tháo lắp thay đổi dây cắm vật lý trên xe.
 
 ### Q12: Về mặt phần mềm và biên dịch hệ thống, nhóm đã giải quyết xung đột gì khi deploy trên Raspberry Pi 4?
 * **Trả lời:** 
