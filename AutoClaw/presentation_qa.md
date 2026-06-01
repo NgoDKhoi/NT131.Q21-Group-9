@@ -93,6 +93,18 @@ Tài liệu này tổng hợp các câu hỏi chuyên sâu mà Hội đồng ph�
 * **Trả lời:** Đây là chính sách bảo mật bắt buộc của các trình duyệt hiện đại (Chrome, Edge, Safari) nhằm bảo vệ quyền riêng tư của người dùng. Các API truy cập phần cứng nhạy cảm như Camera (getUserMedia) và Microphone (SpeechRecognition) **chỉ được cấp quyền chạy** trong môi trường bảo mật (Secure Contexts), bao gồm địa chỉ `localhost` hoặc các tên miền sử dụng giao thức mã hóa **HTTPS**.
   * Để chạy thực tế trên Raspberry Pi qua mạng Wi-Fi của phòng Lab/LAN, nhóm đã tích hợp công cụ **Ngrok** để tạo một đường truyền bảo mật (tunnel) HTTPS hướng ngoại. Trình duyệt client truy cập qua link ngrok này sẽ được cấp đầy đủ quyền sử dụng Camera và Micro để điều khiển xe từ xa.
 
+### Q13: Mô tả luồng hoạt động chi tiết của tính năng điều khiển xe bằng cử chỉ tay (MediaPipe)?
+* **Trả lời:** Luồng xử lý cử chỉ tay hoạt động theo mô hình xử lý phân tán **Edge-Client** để tối ưu hiệu năng:
+  1. **Thu thập dữ liệu hình ảnh (Client-side):** Trình duyệt của người dùng (Client) sử dụng camera/webcam để bắt các khung hình video thời gian thực từ tay người điều khiển.
+  2. **Nhận diện cử chỉ (Mô hình AI trên Client):** Các khung hình được đưa trực tiếp vào thư viện **MediaPipe Tasks Vision** (chạy bằng Javascript WebAssembly, tận dụng card đồ họa GPU của thiết bị client). MediaPipe phát hiện 21 điểm mốc khớp xương bàn tay (Hand Landmarks) và phân tích dạng hình học:
+     * **OK Sign (👌):** Trình duyệt phát hiện ngón trỏ và ngón cái chạm nhau tạo vòng tròn $\rightarrow$ Lệnh Tiến (`F`).
+     * **Closed Fist (✊):** Cả 5 ngón tay khép chặt vào lòng bàn tay $\rightarrow$ Lệnh Dừng (`S`).
+     * **Pointing Up (☝):** Chỉ có ngón trỏ giơ thẳng đứng hướng lên $\rightarrow$ Lệnh Lùi (`B`).
+     * **Thumb Left (👈) / Thumb Right (👉):** Ngón cái chỉ sang trái/phải $\rightarrow$ Lệnh Rẽ Trái (`L`) / Rẽ Phải (`R`).
+     * **Victory (✌):** Ngón trỏ và ngón giữa tạo hình chữ V $\rightarrow$ Kích hoạt Gemini AI phân tích hình ảnh và ra lệnh tự trị.
+  3. **Gửi lệnh điều khiển (API Request):** Sau khi nhận dạng được cử chỉ tương ứng, JavaScript trên frontend tự động gửi một yêu cầu HTTP GET đến Flask API của Pi (ví dụ `/control/F`).
+  4. **Thực thi lệnh vật lý (Lõi an toàn & Vi điều khiển):** Flask nhận request, chuyển qua lớp an toàn Rust để kiểm tra khoảng cách vật cản. Nếu an toàn, lệnh sẽ được đẩy qua Serial xuống Arduino để điều khiển các bánh xe di chuyển.
+
 ---
 
 <a name="nhóm-6"></a>
