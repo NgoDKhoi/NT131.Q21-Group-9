@@ -19,11 +19,16 @@ AutoClaw là một dự án nghiên cứu và phát triển xe robot tự hành 
 
 ## ✨ Tính năng nổi bật
 
-*   🛡️ **Safety Reflex (Phanh khẩn cấp)**: Lõi an toàn bằng **Rust** tự động kiểm tra khoảng cách và chặn các lệnh Tiến (`F`), ép dừng xe ngay lập tức khi phát hiện vật cản $< 15\text{ cm}$ để tránh va chạm.
-*   🤖 **Lõi Tự Trị AutoClaw Agent**: Chạy bằng vòng lặp Tokio không đồng bộ (Rust). Khi kích hoạt chế độ lái tự động AI (`/auto/ai`), server Flask chuyển quyền quyết định hoàn toàn cho Rust Agent để gọi các công cụ AI (Tools): đo khoảng cách, chụp ảnh snapshot và đề xuất hướng lái tối ưu tránh vật cản.
-*   📸 **Snapshot Camera**: Tiết kiệm 99% băng thông của Raspberry Pi bằng cách chụp và gửi ảnh camera tĩnh khi phát hiện cử chỉ Victory (✌), thay vì truyền phát (stream) video MJPEG liên tục gây nghẽn mạng.
-*   ⏱️ **Non-blocking State Machine**: Hệ thống lái tự động trên Arduino sử dụng biến mốc thời gian `millis()` thay cho hàm chặn `delay()`, giúp xe luôn sẵn sàng nhận lệnh ngắt thủ công từ người dùng ngay tức khắc.
-*   ⚡ **Bộ lọc chống nhiễu cảm biến**: Thuật toán trên Arduino tự động lọc nhiễu tín hiệu siêu âm, xe chỉ phản ứng dừng khi có vật cản xuất hiện trong ít nhất 2 chu kỳ đo liên tiếp (~100ms).
+*   🛡️ **Safety Reflex (Phanh khẩn cấp & Phản xạ an toàn)**: Lõi bảo vệ bằng **Rust** liên tục giám sát khoảng cách cảm biến từ cache. Khi nhận lệnh Tiến (`F`) mà khoảng cách phía trước $< 15\text{ cm}$, hệ thống sẽ kích hoạt phản xạ an toàn tự động ghi đè và gửi lệnh Dừng (`S`) xuống Arduino ngay lập tức để ngăn ngừa va chạm vật lý.
+*   🧠 **Trí tuệ Nhân tạo đa phương thức (Multimodal AI Control)**:
+    *   **Điều khiển cử chỉ (MediaPipe)**: Nhận diện và dịch trực tiếp các cử chỉ bàn tay (✌ để quét AI, 👌 tiến, ✊ dừng, ☝ lùi, 👈 rẽ trái, 👉 rẽ phải, 🤟 bật/tắt tự động) trên GPU client.
+    *   **Điều khiển giọng nói**: Nhận diện khẩu lệnh tiếng Việt qua Web Speech API để vận hành xe rảnh tay.
+    *   **Giám sát & Điều khiển qua Telegram**: Tích hợp Telegram Bot chạy đa luồng hỗ trợ điều khiển xe, kiểm tra trạng thái cảm biến và chụp ảnh snapshot gửi trực tiếp về ứng dụng chat từ xa.
+*   🤖 **Lõi tuần tra tự trị AutoClaw Agent (Rust Core)**: Vòng lặp Tokio không đồng bộ trong Rust Core tự động thu thập khoảng cách, chụp ảnh camera qua Flask `/snapshot`, gọi Gemini 2.0 Flash Vision để nhận diện chướng ngại vật bằng tiếng Việt và đề xuất hướng di chuyển tối ưu kèm theo **lý giải chi tiết (reasoning)** hiển thị trực tiếp trên dashboard.
+*   🔌 **Tối ưu hóa phần cứng & Tương thích Real/Mock**:
+    *   **Cơ chế Safe Servo**: Tự động kết nối/ngắt (`attach`/`detach`) động cơ Servo SG90 để giải phóng Timer 1 trên Arduino Uno R3, giải quyết triệt để lỗi xung đột ngắt làm sai lệch cảm biến siêu âm.
+    *   **Thu hẹp góc quét**: Cấu hình góc quét tối ưu **60 độ** (30° - 90° - 150°) giúp giảm thiểu thời gian quay servo và tăng tốc độ phản hồi vật lý khi quét vật cản.
+    *   **Chế độ mô phỏng linh hoạt (Simulation Fallback)**: Flask tự động nạp thư viện giả lập [autoclaw_mock.py](file:///c:/Users/khoi1/MyRepo/NT131.Q21-Group-9/AutoClaw/autoclaw_mock.py) nếu không có phần cứng vật lý kết nối, giúp việc debug giao diện và kiểm thử AI thuận tiện.
 
 ---
 
