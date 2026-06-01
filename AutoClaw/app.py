@@ -444,15 +444,21 @@ def init_telegram_bot():
                 bot.reply_to(message, err)
                 return
             
-            bot.send_chat_action(message.chat.id, "upload_photo")
-            frame = get_camera_frame()
-            ok, buf = cv2.imencode(".jpg", frame, [cv2.IMWRITE_JPEG_QUALITY, 90])
-            if ok:
-                bio = io.BytesIO(buf.tobytes())
-                bio.name = 'snapshot.jpg'
-                bot.send_photo(message.chat.id, bio, caption="📸 Ảnh chụp thực tế từ AutoClaw")
-            else:
-                bot.reply_to(message, "Lỗi chụp/mã hóa hình ảnh.")
+            try:
+                bot.send_chat_action(message.chat.id, "upload_photo")
+                frame = get_camera_frame()
+                ok, buf = cv2.imencode(".jpg", frame, [cv2.IMWRITE_JPEG_QUALITY, 90])
+                if ok:
+                    bio = io.BytesIO(buf.tobytes())
+                    bio.name = 'snapshot.jpg'
+                    bot.send_photo(message.chat.id, bio, caption="📸 Ảnh chụp thực tế từ AutoClaw")
+                    logger.info("✅ Telegram: Đã gửi ảnh snapshot thành công")
+                else:
+                    logger.error("❌ Telegram: Lỗi mã hóa hình ảnh OpenCV")
+                    bot.reply_to(message, "Lỗi chụp/mã hóa hình ảnh.")
+            except Exception as e:
+                logger.error(f"❌ Telegram send_photo failed: {e}")
+                bot.reply_to(message, f"Không thể gửi ảnh: {e}")
 
         @bot.message_handler(commands=["control"])
         def handle_control(message):
