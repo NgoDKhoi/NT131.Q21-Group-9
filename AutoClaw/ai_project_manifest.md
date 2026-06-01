@@ -37,7 +37,7 @@ This file contains the structured configuration, context, and project informatio
       },
       "ultrasonic": {
         "TRIG": 12,
-        "ECHO": 13
+        "ECHO": 3
       },
       "servo": {
         "PIN": 10

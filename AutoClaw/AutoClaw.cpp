@@ -14,7 +14,7 @@ const int pinIN3 = 9;   // Motor Right Input 1
 const int pinIN4 = 11;  // Motor Right Input 2 - Official Pin
 
 const int pinTRIG = 12; // HC-SR04 Trigger Pin
-const int pinECHO = 13; // HC-SR04 Echo Pin
+const int pinECHO = 3;  // HC-SR04 Echo Pin (Moved from 13 to 3 to avoid Pin 13 LED loading issues)
 const int pinSERVO = 10; // SG90 Servo Control Pin (Moved to 10 because 11 is used for IN4)
 
 // ── Servo Configuration ─────────────────────────────────────
@@ -109,6 +109,14 @@ void stopMotors() {
   digitalWrite(pinIN4, LOW);
 }
 
+// Safe Servo Control to avoid continuous Timer 1 interrupts interfering with pulseIn
+void safeServoWrite(int angle) {
+  cameraServo.attach(pinSERVO);
+  cameraServo.write(angle);
+  delay(150); // Small blocking delay just to let the servo start its movement
+  cameraServo.detach(); // Immediately detach to release Timer 1
+}
+
 float measureDistance() {
   digitalWrite(pinTRIG, LOW);
   delayMicroseconds(2);
@@ -116,8 +124,8 @@ float measureDistance() {
   delayMicroseconds(10);
   digitalWrite(pinTRIG, LOW);
 
-  // Measure echo pulse with a 20ms timeout (~3.4m max range)
-  long duration = pulseIn(pinECHO, HIGH, 20000);
+  // Measure echo pulse with a 30ms timeout (~5m max range) to avoid early timeout under electrical noise
+  long duration = pulseIn(pinECHO, HIGH, 30000);
   if (duration == 0) {
     return 999.0;
   }
@@ -160,7 +168,7 @@ void handleSerialCommands() {
         break;
       case 'S':
         stopMotors();
-        cameraServo.write(angleCenter); // Center camera for safety / manual use
+        safeServoWrite(angleCenter); // Center camera for safety / manual use
         // If in auto mode, pressing STOP exits auto mode for safety
         if (currentMode == MODE_AUTO) {
           currentMode = MODE_MANUAL;
@@ -180,20 +188,20 @@ void handleSerialCommands() {
         if (currentMode != MODE_MANUAL) {
           currentMode = MODE_MANUAL;
           stopMotors();
-          cameraServo.write(angleCenter); // Re-center camera servo
+          safeServoWrite(angleCenter); // Re-center camera servo
           sendModeReport();
         }
         break;
 
       // Servo movements (accessible in any mode)
       case '1':
-        cameraServo.write(angleLeft);
+        safeServoWrite(angleLeft);
         break;
       case '2':
-        cameraServo.write(angleRight);
+        safeServoWrite(angleRight);
         break;
       case '3':
-        cameraServo.write(angleCenter);
+        safeServoWrite(angleCenter);
         break;
         
       default:
@@ -225,7 +233,7 @@ void updateAutoDrive() {
 
     case AUTO_SCAN_STOP:
       if (now - stateStartTime >= 200) { // Stop for 200ms to stabilize
-        cameraServo.write(angleLeft);    // Look Left
+        safeServoWrite(angleLeft);    // Look Left
         currentAutoState = AUTO_SCAN_LEFT;
         stateStartTime = now;
       }
@@ -234,7 +242,7 @@ void updateAutoDrive() {
     case AUTO_SCAN_LEFT:
       if (now - stateStartTime >= 500) { // Wait 500ms for servo to reach 0 degrees and reading to settle
         distanceLeft = currentDistance;  // Record left distance
-        cameraServo.write(angleRight);   // Look Right
+        safeServoWrite(angleRight);   // Look Right
         currentAutoState = AUTO_SCAN_RIGHT;
         stateStartTime = now;
       }
@@ -243,7 +251,7 @@ void updateAutoDrive() {
     case AUTO_SCAN_RIGHT:
       if (now - stateStartTime >= 700) { // Wait 700ms for full sweep to 180 degrees and settle
         distanceRight = currentDistance; // Record right distance
-        cameraServo.write(angleCenter);  // Return to center
+        safeServoWrite(angleCenter);  // Return to center
         currentAutoState = AUTO_SCAN_DECIDE;
         stateStartTime = now;
       }
@@ -322,7 +330,9 @@ void setup() {
 
   // Initialize camera servo SG90
   cameraServo.attach(pinSERVO);
-  cameraServo.write(angleCenter);
+  safeServoWrite(angleCenter);
+  delay(150);
+  cameraServo.detach(); // Detach initially to prevent interference during startup
 
   // Stop motors initially
   stopMotors();
