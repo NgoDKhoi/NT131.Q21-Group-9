@@ -19,7 +19,7 @@ AutoClaw là một dự án nghiên cứu và phát triển xe robot tự hành 
 
 ## ✨ Tính năng nổi bật
 
-*   🛡️ **Safety Reflex (Phanh khẩn cấp & Phản xạ an toàn)**: Lõi bảo vệ bằng **Rust** liên tục giám sát khoảng cách cảm biến từ cache. Khi nhận lệnh Tiến (`F`) mà khoảng cách phía trước $< 15\text{ cm}$, hệ thống sẽ kích hoạt phản xạ an toàn tự động ghi đè và gửi lệnh Dừng (`S`) xuống Arduino ngay lập tức để ngăn ngừa va chạm vật lý.
+*   🛡️ **Safety Reflex (Phanh khẩn cấp & Phản xạ an toàn)**: Lõi bảo vệ bằng **Rust** liên tục giám sát khoảng cách cảm biến từ cache. Khi nhận lệnh Tiến (`F`) mà khoảng cách phía trước < 15 cm, hệ thống sẽ kích hoạt phản xạ an toàn tự động ghi đè và gửi lệnh Dừng (`S`) xuống Arduino ngay lập tức để ngăn ngừa va chạm vật lý.
 *   🧠 **Trí tuệ Nhân tạo đa phương thức (Multimodal AI Control)**:
     *   **Điều khiển cử chỉ (MediaPipe)**: Nhận diện và dịch trực tiếp các cử chỉ bàn tay (✌ để quét AI, 👌 tiến, ✊ dừng, ☝ lùi, 👈 rẽ trái, 👉 rẽ phải, 🤟 bật/tắt tự động) trên GPU client.
     *   **Điều khiển giọng nói**: Nhận diện khẩu lệnh tiếng Việt qua Web Speech API để vận hành xe rảnh tay.
@@ -42,6 +42,7 @@ AutoClaw là một dự án nghiên cứu và phát triển xe robot tự hành 
 5.  **Động cơ Servo SG90**: Xoay cảm biến siêu âm và camera sang Trái/Phải/Giữa.
 6.  **Raspberry Pi Camera Module (hoặc USB Webcam)**: Ghi hình môi trường thực tế trước xe để gửi dữ liệu về cho Gemini Vision AI phân tích.
 
+```text
 Motor Trái   : ENA = chân 5  | IN1 = chân 7  | IN2 = chân 8
 Motor Phải   : ENB = chân 6  | IN3 = chân 9  | IN4 = chân 11
 Cảm biến âm  : TRIG = chân A5 | ECHO = chân A4
