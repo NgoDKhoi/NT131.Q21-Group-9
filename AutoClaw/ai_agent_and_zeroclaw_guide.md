@@ -37,11 +37,21 @@ Một AI Agent tự trị hoạt động theo vòng lặp đóng **Loop (Cảm n
 ---
 
 <a name="kiến-trúc-zeroclaw"></a>
-## 3. Framework ZeroClaw / AutoClaw Agent hoạt động như thế nào?
+## 3. Bản chất của Công nghệ ZeroClaw trên GitHub và Cách tích hợp trong Đồ án
 
-**ZeroClaw** (tên gọi của lõi phát triển ban đầu, nay đồng bộ thương hiệu thành **AutoClaw Agent**) là framework được viết bằng ngôn ngữ **Rust**, hoạt động dựa trên mô hình chạy đa nhiệm không đồng bộ (Tokio runtime).
+**ZeroClaw (zeroclaw-labs/zeroclaw)** là một framework mã nguồn mở được viết hoàn toàn bằng ngôn ngữ **Rust** đang rất nổi bật trên GitHub. Nó được thiết kế làm một **hệ điều hành/môi trường chạy siêu nhẹ (Autonomous Agent Runtime)** chuyên chạy các tác vụ AI Agent tự trị.
 
-Sơ đồ kiến trúc hoạt động của Agent chạy trong Rust Core:
+### Đặc điểm nổi bật của ZeroClaw gốc:
+* **Siêu nhẹ:** Chỉ tiêu thụ dưới 5MB RAM, biên dịch ra một file nhị phân nhỏ, chạy trực tiếp trên phần cứng Edge (như Raspberry Pi).
+* **Mô hình Hướng Công cụ (Trait-driven & Tool-centric):** Cho phép Agent tự do lập kế hoạch hành động bằng cách tự gọi các công cụ ngoài (`Tools`) đã được khai báo.
+
+### Cách thức tích hợp trong Đồ án của chúng ta:
+Lõi Rust Core (`autoclaw_core`) của xe AutoClaw được nhóm thiết kế và triển khai dựa trên **triết lý cấu trúc của ZeroClaw**:
+1. **Tokio Async Runtime:** Kế thừa cách ZeroClaw quản lý luồng, chạy vòng lặp Agent tuần tra ngầm trong Rust bằng Tokio runtime không đồng bộ để tối ưu RAM của Pi 4.
+2. **Đăng ký Hệ thống Tools:** Agent của xe khai báo các Tool riêng biệt để tương tác vật lý:
+   * **`CaptureSnapshotTool`:** Chụp ảnh camera xe.
+   * **`GetDistanceTool`:** Đọc khoảng cách siêu âm.
+   * **`ControlCarTool`:** Gửi lệnh lái bánh xe.
 
 ```
    [ Raspberry Pi Camera ]  <─── (Chụp ảnh) ───┐
