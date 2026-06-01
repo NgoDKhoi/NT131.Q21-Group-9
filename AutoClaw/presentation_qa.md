@@ -10,8 +10,8 @@ Tài liệu này tổng hợp các câu hỏi chuyên sâu mà Hội đồng ph�
 * [Nhóm 2: Lõi An toàn bằng Rust (Safety Reflex)](#nhóm-2)
 * [Nhóm 3: Vòng lặp Quyết định Tự trị của AI Agent (Gemini API)](#nhóm-3)
 * [Nhóm 4: Điều khiển Phần cứng & Xử lý Tín hiệu (Arduino)](#nhóm-4)
-* [Nhóm 5: Các phương thức điều khiển Đa phương thức (Voice, Gesture, Telegram)](#nhóm-5)
-* [Nhóm 6: Các lỗi kỹ thuật và sự cố phần cứng/phần mềm thực tế đã vượt qua](#nhóm-6)
+* [Nhóm 5: Các phương thức điều khiển Đa phương thức (Voice, Gesture)](#nhóm-5)
+* [Nhóm 6: Các lỗi kỹ thuật và sự cố thực tế đã vượt qua](#nhóm-6)
 
 ---
 
@@ -58,14 +58,22 @@ Tài liệu này tổng hợp các câu hỏi chuyên sâu mà Hội đồng ph�
     4. Gemini phân tích ngữ cảnh (ví dụ: "Trước mặt là một chiếc hộp các-tông ở cự ly 25cm, bên phải trống") và đề xuất hướng lái tối ưu tránh vật cản bằng tiếng Việt (dưới 15 từ) cùng lệnh điều hướng đi kèm.
     5. Agent tự động thực thi lệnh đó thông qua **ControlCarTool**.
 
-### Q7: Thuật toán trên Arduino tự động lọc nhiễu tín hiệu siêu âm như thế nào để tránh xe phanh ảo?
+---
+
+<a name="nhóm-4"></a>
+## 🔌 Nhóm 4: Điều khiển Phần cứng & Xử lý Tín hiệu (Arduino)
+
+### Q6: Thuật toán trên Arduino tự động lọc nhiễu tín hiệu siêu âm như thế nào để tránh xe phanh ảo?
 * **Trả lời:** Cảm biến siêu âm HC-SR04 thường bị nhiễu do sóng phản xạ góc chéo hoặc nhiễu điện từ động cơ (xuất hiện các phép đo sai lệch cực ngắn $0$ hoặc dưới $15\text{ cm}$).
   * Trong hàm `updateAutoDrive()`, nhóm triển khai một bộ lọc tích lũy trạng thái (State Accumulator) thông qua biến `consecutiveObstacleCount`.
   * Xe chỉ xác nhận có vật cản và dừng lại khi khoảng cách đo được nhỏ hơn ngưỡng an toàn trong **ít nhất 2 chu kỳ đo liên tiếp** (mỗi chu kỳ cách nhau 50ms, tương đương tổng thời gian xác nhận là 100ms). Nếu chỉ có 1 chu kỳ báo khoảng cách nhỏ rồi chu kỳ sau bình thường, bộ lọc sẽ tự động reset về `0` và coi đó là nhiễu xung động.
 
+---
 
+<a name="nhóm-5"></a>
+## 🌐 Nhóm 5: Các phương thức điều khiển Đa phương thức
 
-### Q13: Mô tả luồng hoạt động chi tiết của tính năng điều khiển xe bằng cử chỉ tay (MediaPipe)?
+### Q7: Mô tả luồng hoạt động chi tiết của tính năng điều khiển xe bằng cử chỉ tay (MediaPipe)?
 * **Trả lời:** Luồng xử lý cử chỉ tay hoạt động theo mô hình xử lý phân tán **Edge-Client** để tối ưu hiệu năng:
   1. **Thu thập dữ liệu hình ảnh (Client-side):** Trình duyệt của người dùng (Client) sử dụng camera/webcam để bắt các khung hình video thời gian thực từ tay người điều khiển.
   2. **Nhận diện cử chỉ (Mô hình AI trên Client):** Các khung hình được đưa trực tiếp vào thư viện **MediaPipe Tasks Vision** (chạy bằng Javascript WebAssembly, tận dụng card đồ họa GPU của thiết bị client). MediaPipe phát hiện 21 điểm mốc khớp xương bàn tay (Hand Landmarks) và phân tích dạng hình học:
@@ -77,7 +85,7 @@ Tài liệu này tổng hợp các câu hỏi chuyên sâu mà Hội đồng ph�
   3. **Gửi lệnh điều khiển (API Request):** Sau khi nhận dạng được cử chỉ tương ứng, JavaScript trên frontend tự động gửi một yêu cầu HTTP GET đến Flask API của Pi (ví dụ `/control/F`).
   4. **Thực thi lệnh vật lý (Lõi an toàn & Vi điều khiển):** Flask nhận request, chuyển qua lớp an toàn Rust để kiểm tra khoảng cách vật cản. Nếu an toàn, lệnh sẽ được đẩy qua Serial xuống Arduino để điều khiển các bánh xe di chuyển.
 
-### Q14: Mô tả luồng hoạt động chi tiết của tính năng điều khiển bằng giọng nói (tiếng Việt)?
+### Q8: Mô tả luồng hoạt động chi tiết của tính năng điều khiển bằng giọng nói (tiếng Việt)?
 * **Trả lời:** Luồng điều khiển bằng giọng nói được thiết kế dựa trên dịch vụ nhận dạng tiếng Việt trực tuyến kết hợp tiền xử lý từ khóa trên Client:
   1. **Thu âm & Chuyển âm thoại thành văn bản (STT):** Trình duyệt của người dùng sử dụng API **Web Speech API** (cụ thể là đối tượng `webkitSpeechRecognition`) để truy cập Microphone. Khi người dùng nói, âm thanh được gửi lên máy chủ nhận diện của Google Cloud (qua Web API tích hợp sẵn trong trình duyệt Chrome) để chuyển đổi thành văn bản tiếng Việt thời gian thực với cấu hình `recognition.lang = 'vi-VN'`.
   2. **Tiền xử lý chuỗi và Trích xuất từ khóa (Keyword Extraction):** Đoạn văn bản trả về sẽ được đưa vào hàm xử lý JavaScript trên Dashboard:
@@ -94,11 +102,10 @@ Tài liệu này tổng hợp các câu hỏi chuyên sâu mà Hội đồng ph�
 
 ---
 
-
 <a name="nhóm-6"></a>
 ## 🛠️ Nhóm 6: Lỗi kỹ thuật và Sự cố thực tế đã vượt qua
 
-### Q11: Trong quá trình triển khai thực tế, nhóm đã gặp những sự cố phần cứng nào khó khăn nhất và giải quyết ra sao?
+### Q9: Trong quá trình triển khai thực tế, nhóm đã gặp những sự cố phần cứng nào khó khăn nhất và giải quyết ra sao?
 * **Trả lời:** Sự cố phần cứng lớn nhất của nhóm chủ yếu xoay quanh việc **khai báo sai lệch chân cắm điều khiển trong mã nguồn so với cách đấu nối dây vật lý thực tế của kit xe ELEGOO**:
   1. **Lỗi điều khiển động cơ (Bánh bên trái không hoạt động khi đi Tiến/Rẽ phải):**
      * *Nguyên nhân:* Sơ đồ chân động cơ ban đầu định nghĩa sai so với mạch cầu H L298N trên kit xe. Chân Enable của động cơ phải cắm chân 6 nhưng code khai báo chân 10, các chân logic IN1, IN2 cắm sai dẫn đến việc phân cực sai lệch.
@@ -107,9 +114,8 @@ Tài liệu này tổng hợp các câu hỏi chuyên sâu mà Hội đồng ph�
      * *Nguyên nhân:* Trên mạch mở rộng (Sensor Shield), các đường mạch in của cảm biến siêu âm được định tuyến mặc định về hai chân analog **A5** (Trigger) và **A4** (Echo), còn Servo cắm ở chân **3**. Tuy nhiên, code cũ khai báo chân Trigger/Echo là 12/13 và Servo chân 10, khiến vi điều khiển phát xung điều khiển ra các chân trống.
      * *Giải pháp:* Điều chỉnh khai báo chân trong code khớp hoàn toàn với thiết kế mạch thực tế của kit xe: `pinTRIG = A5`, `pinECHO = A4`, và `pinSERVO = 3` mà không cần tháo lắp thay đổi dây cắm vật lý trên xe.
 
-### Q12: Về mặt phần mềm và biên dịch hệ thống, nhóm đã giải quyết xung đột gì khi deploy trên Raspberry Pi 4?
+### Q10: Về mặt phần mềm và biên dịch hệ thống, nhóm đã giải quyết xung đột gì khi deploy trên Raspberry Pi 4?
 * **Trả lời:** 
   1. **Lỗi không tương thích Python 3.13 trên Raspberry Pi OS mới:** Lõi Rust ban đầu sử dụng PyO3 v0.21 không tương thích với Python 3.13 (gây lỗi biên dịch `maturin develop`). Nhóm đã nâng cấp PyO3 lên phiên bản **v0.22** và cấu hình lại API `#[pymodule]` để hỗ trợ trơn tru Python 3.13.
   2. **Lỗi định dạng ngắt dòng (CRLF vs LF):** File `Cargo.toml` viết trên Windows khi chuyển lên Linux gặp lỗi cú pháp TOML do ký tự ngắt dòng ẩn `\r` (CR). Nhóm đã chuẩn hóa toàn bộ mã nguồn sang ngắt dòng **LF** và bổ sung cấu hình **`.gitattributes`** để ngăn ngừa lỗi này lặp lại trong tương lai.
   3. **Thiếu thư viện hệ thống khi build reqwest:** Hệ thống thiếu gói OpenSSL và udev headers (`libssl-dev`, `libudev-dev`, `pkg-config`). Nhóm đã cài đặt bổ sung các package này từ kho APT của Debian để quá trình biên dịch liên kết thư viện tĩnh thành công.
-
