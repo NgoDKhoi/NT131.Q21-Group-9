@@ -108,23 +108,29 @@ class AutoClawMock:
                 
             return json.dumps({
                 "description": decision.get("description", "Không xác định"),
-                "command": cmd
+                "command": cmd,
+                "reason": decision.get("reason", "Lý do dựa trên phân tích hình ảnh thực tế")
             }, ensure_ascii=False)
         except Exception as e:
             logger.error(f"[MOCK-CAR] Gemini call failed: {e}. Returning mock analysis.")
             mock_desc = "Cửa sổ/Vật cản mock"
+            mock_reason = "Không phát hiện mối nguy hiểm"
             if self.distance < 15.0:
                 mock_desc = "Bức tường quá gần"
                 mock_cmd = "B"
+                mock_reason = "Tránh va chạm trực tiếp"
             elif self.distance < 30.0:
                 mock_desc = "Hộp giấy phía trước"
                 mock_cmd = "L"
+                mock_reason = "Lối rẽ trái rộng hơn"
             else:
                 mock_desc = "Đường đi thoáng đãng"
                 mock_cmd = "F"
+                mock_reason = "Không có chướng ngại vật"
             return json.dumps({
                 "description": f"[Mock AI] {mock_desc}",
-                "command": mock_cmd
+                "command": mock_cmd,
+                "reason": mock_reason
             }, ensure_ascii=False)
 
     def start_agent(self, api_key: str):

@@ -353,7 +353,8 @@ def ai_analyze():
             "status": "success",
             "image": f"data:image/jpeg;base64,{image_base64}",
             "description": decision.get("description", "Không có mô tả"),
-            "command": decision.get("command", "S")
+            "command": decision.get("command", "S"),
+            "reason": decision.get("reason", "Không có lý do")
         })
     except Exception as e:
         logger.error(f"❌ Lỗi phân tích AI: {e}")

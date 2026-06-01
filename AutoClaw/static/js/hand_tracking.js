@@ -171,6 +171,8 @@ async function triggerAiAnalyze() {
       // Điền thông tin phản hồi của AI vào giao diện
       if (aiDesc) aiDesc.textContent = data.description;
       if (aiSuggestVal) aiSuggestVal.textContent = window.CMD_LABELS?.[data.command] || data.command;
+      const aiReasonVal = document.getElementById('ai-reason-val');
+      if (aiReasonVal) aiReasonVal.textContent = data.reason || 'Không có lý do';
       if (aiSuggestWrap) aiSuggestWrap.style.display = 'block';
 
       // Kích hoạt nhấp nháy phát sáng nút D-pad tương ứng trong 5 giây
@@ -178,7 +180,7 @@ async function triggerAiAnalyze() {
         window.showAiSuggestion(data.command, data.description);
       }
 
-      window.appendLogRaw?.('🤖 AI: ' + data.description + ` (Gợi ý: ${data.command})`, 'var(--blue)');
+      window.appendLogRaw?.('🤖 AI: ' + data.description + ` (Gợi ý: ${data.command}). Lý do: ${data.reason || 'Không có lý do'}`, 'var(--blue)');
     } else {
       throw new Error(data.message || 'Lỗi không xác định');
     }

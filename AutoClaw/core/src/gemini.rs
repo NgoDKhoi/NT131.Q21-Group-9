@@ -19,7 +19,8 @@ Bạn là trợ lý AI phân tích hình ảnh của xe robot AutoClaw. \
 Nhìn vào bức ảnh phía trước và đưa ra phân tích theo định dạng JSON sau:
 {
   \"description\": \"Mô tả ngắn gọn vật thể/vật cản chính chắn phía trước bằng tiếng Việt (dưới 15 từ)\",
-  \"command\": \"Lệnh di chuyển đề xuất: 'F' (Tiến nếu thoáng), 'B' (Lùi nếu bị chặn sát), 'L' (Rẽ trái), 'R' (Rẽ phải), 'S' (Dừng lại)\"
+  \"command\": \"Lệnh di chuyển đề xuất: 'F' (Tiến nếu thoáng), 'B' (Lùi nếu bị chặn sát), 'L' (Rẽ trái), 'R' (Rẽ phải), 'S' (Dừng lại)\",
+  \"reason\": \"Lý do ngắn gọn bằng tiếng Việt tại sao bạn đề xuất lệnh lái này (dưới 15 từ)\"
 }
 Lưu ý: Chỉ trả về chuỗi JSON hợp lệ, không thêm bất kỳ văn bản giải thích nào khác ngoài JSON. Không bọc trong dấu nháy ```json.";
 
@@ -83,6 +84,7 @@ pub struct GeminiError {
 pub struct GeminiDecision {
     pub description: String,
     pub command: String,
+    pub reason: String,
 }
 
 // ── GeminiClient ─────────────────────────────────────────────
@@ -179,11 +181,13 @@ impl GeminiClient {
             Ok(GeminiDecision {
                 description: decision.description,
                 command: cmd_upper,
+                reason: decision.reason,
             })
         } else {
             Ok(GeminiDecision {
                 description: decision.description,
                 command: "S".to_string(), // Fallback to Stop if AI commands weirdly
+                reason: decision.reason,
             })
         }
     }

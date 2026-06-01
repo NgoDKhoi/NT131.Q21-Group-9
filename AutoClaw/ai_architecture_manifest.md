@@ -2,7 +2,7 @@
 
 This file outlines the technical system architecture, data flows, and design decisions of AutoClaw. It is formatted in JSON to give AI models a clean structural map of how components interact.
 
-```json
+```json 
 {
   "system_architecture": {
     "layers": {

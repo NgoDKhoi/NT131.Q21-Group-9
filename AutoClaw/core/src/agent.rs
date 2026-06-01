@@ -123,10 +123,10 @@ pub async fn run_agent_loop(
         match decision {
             Ok(Ok(d)) => {
                 println!(
-                    "🤖 [AutoClaw Agent] Phân tích: \"{}\" → Lệnh đề xuất: {}",
-                    d.description, d.command
+                    "🤖 [AutoClaw Agent] Phân tích: \"{}\" → Lệnh đề xuất: {} (Lý do: {})",
+                    d.description, d.command, d.reason
                 );
-                *latest_ai_log.lock().unwrap() = format!("{} (Gợi ý: {})", d.description, d.command);
+                *latest_ai_log.lock().unwrap() = format!("{} (Gợi ý: {}). Lý do: {}", d.description, d.command, d.reason);
                 // 4. Thực thi lệnh (qua Safety Reflex)
                 let result = control_car(&d.command, &port_writer, &latest_distance).await;
                 println!("🤖 [AutoClaw Agent] {}", result);
