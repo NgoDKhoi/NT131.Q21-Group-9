@@ -24,8 +24,9 @@ const int angleCenter = 90;
 const int angleRight  = 150; // 60 degrees right from center (90 + 60 = 150)
 
 // ── Robot Speed Configuration ───────────────────────────────
-const int speedForward = 140; // Reduced from 180 for better stability and response time
-const int speedTurn    = 180; // Reduced from 255 for gentler turning maneuvers
+const int speedForward  = 200; // Speed for forward movement
+const int speedBackward = 200; // Speed for backward movement
+const int speedTurn     = 180; // Speed for turning maneuvers
 
 // ── State Management ────────────────────────────────────────
 enum Mode {
@@ -158,7 +159,7 @@ void handleSerialCommands() {
         if (currentMode == MODE_MANUAL) moveForward(speedForward);
         break;
       case 'B':
-        if (currentMode == MODE_MANUAL) moveBackward(speedForward);
+        if (currentMode == MODE_MANUAL) moveBackward(speedBackward);
         break;
       case 'L':
         if (currentMode == MODE_MANUAL) turnLeft(speedTurn);
@@ -217,7 +218,7 @@ void updateAutoDrive() {
   
   switch (currentAutoState) {
     case AUTO_FORWARD:
-      moveForward(speedForward - 30); // Slightly slower for auto-navigation stability
+      moveForward(speedForward); // Drive at full speedForward (200) to ensure sufficient torque on battery power
       if (currentDistance < safeDistanceThreshold) {
         consecutiveObstacleCount++;
         if (consecutiveObstacleCount >= 2) { // Cần ít nhất 2 chu kỳ đo liên tục (100ms) để xác nhận
@@ -262,7 +263,7 @@ void updateAutoDrive() {
         // Compare distances and choose direction
         if (distanceLeft <= safeDistanceThreshold && distanceRight <= safeDistanceThreshold) {
           // Both sides blocked, back up and then turn right
-          moveBackward(speedForward);
+          moveBackward(speedBackward);
           currentAutoState = AUTO_BACKUP;
           stateStartTime = now;
         } else if (distanceLeft > distanceRight) {
