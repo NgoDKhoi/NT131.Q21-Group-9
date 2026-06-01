@@ -24,9 +24,9 @@ const int angleCenter = 90;
 const int angleRight  = 150; // 60 degrees right from center (90 + 60 = 150)
 
 // ── Robot Speed Configuration ───────────────────────────────
-const int speedForward  = 200; // Speed for forward movement
-const int speedBackward = 200; // Speed for backward movement
-const int speedTurn     = 180; // Speed for turning maneuvers
+const int speedForward  = 220; // Speed for forward movement
+const int speedBackward = 220; // Speed for backward movement
+const int speedTurn     = 220; // Speed for turning maneuvers
 
 // ── State Management ────────────────────────────────────────
 enum Mode {
