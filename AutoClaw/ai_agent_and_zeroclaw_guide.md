@@ -27,13 +27,27 @@ Một AI Agent tự trị hoạt động theo vòng lặp đóng **Loop (Cảm n
 ---
 
 <a name="khác-biệt"></a>
-## 2. Sự khác biệt giữa AI truyền thống và AI Agent
+## 2. Sự phân biệt giữa Thuật toán cứng (Rule-based), Chatbot LLM (Hỏi-Đáp) và AI Agent (Tự trị)
 
-| Đặc điểm | AI truyền thống (Classical AI/ML) | AI Agent tự trị (Đồ án AutoClaw) |
-|---|---|---|
-| **Cơ chế ra quyết định** | Phụ thuộc vào các luật cứng viết sẵn (Rule-based, ví dụ `if-else` trên Arduino). | Tự động lập kế hoạch linh hoạt dựa trên ngữ cảnh thực tế (Cognitive Reasoning). |
-| **Sử dụng công cụ** | Không có khả năng tự gọi công cụ ngoài. | Có khả năng tự quyết định khi nào cần sử dụng các công cụ (**Tools**) như đo khoảng cách, chụp ảnh, lái xe. |
-| **Khả năng thích ứng** | Gặp vật cản lạ không có trong lập trình `if-else` sẽ bị kẹt hoặc đâm vào. | Có khả năng hiểu các vật thể phức tạp (chướng ngại vật mềm, dải phân cách, con người) nhờ Vision LLM và tìm đường tránh tối ưu. |
+Để tránh nhầm lẫn các khái niệm khoa học máy tính khi báo cáo đồ án, chúng ta cần phân biệt rõ 3 mức độ xử lý:
+
+### A. Thuật toán điều khiển cứng (Rule-based / C++ if-else trên Arduino)
+* **Bản chất:** Là các phản xạ cứng do con người lập trình sẵn từ trước bằng các câu lệnh điều kiện `if-else` (ví dụ: `if (khoảng cách < 20cm) { dừng xe }`).
+* **Hạn chế:** Không có khả năng nhận thức, không tự học hỏi hay thích ứng được khi gặp các tình huống hoặc chướng ngại vật phức tạp nằm ngoài các trường hợp lập trình cứng.
+
+### B. Chatbot LLM thuần túy (Mô hình ngôn ngữ lớn như ChatGPT, Gemini Chat)
+* **Bản chất:** Là trí tuệ nhân tạo thế hệ mới (Generative AI) hoạt động dưới dạng **Hỏi và Đáp** thụ động (Passive Q&A).
+* **Hạn chế:** Chatbot chỉ giao tiếp bằng văn bản/hình ảnh trên khung chat, hoàn toàn **không thể tự ý tương tác vật lý** hay tự động ra quyết định kích hoạt phần cứng (như bánh xe, cảm biến) ở thế giới thực.
+
+### C. AI Agent tự trị (Autonomous AI Agent - Đồ án AutoClaw)
+* **Bản chất:** Là thực thể AI được cung cấp các công cụ kết nối phần cứng (**Tools**) và chạy trong vòng lặp quyết định đóng (Tokio async loop).
+* **Điểm vượt trội:** Agent tự động "quan sát" môi trường, gửi dữ liệu đa phương thức (ảnh chụp camera + khoảng cách siêu âm) cho bộ não LLM suy nghĩ, và tự động gọi các Tool thực thi lái xe vật lý mà không cần người dùng đặt câu hỏi hay can thiệp.
+
+| Tiêu chí so sánh | Thuật toán cứng (C++ if-else) | Chatbot LLM (ChatGPT/Gemini Chat) | AI Agent tự trị (AutoClaw Agent) |
+|---|---|---|---|
+| **Cơ chế ra quyết định** | Theo luật cứng viết sẵn. | Phân tích ngôn ngữ thế hệ mới. | Tự lập kế hoạch linh hoạt dựa trên mục tiêu và ngữ cảnh. |
+| **Sử dụng công cụ ngoài** | Không. | Không (chỉ trả lời text/hình ảnh). | **Có** (Tự gọi các Tool phần cứng khi cần). |
+| **Tính chủ động (Tự trị)**| Bị động theo kích hoạt cảm biến. | Bị động theo câu hỏi của người dùng. | **Chủ động** chạy vòng lặp tuần tra tự động. |
 
 ---
 
