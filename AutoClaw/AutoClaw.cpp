@@ -62,6 +62,7 @@ int consecutiveObstacleCount = 0;          // Bộ đếm chống nhiễu cảm 
 // ── Helper Functions ────────────────────────────────────────
 
 void moveForward(int speed) {
+  Serial.println("EXEC:FORWARD");
   analogWrite(pinENA, speed);
   analogWrite(pinENB, speed);
   // Nếu bánh trái chỉ chạy khi IN1=LOW, IN2=HIGH (đã chạy tốt ở lệnh B),
@@ -74,6 +75,7 @@ void moveForward(int speed) {
 }
 
 void moveBackward(int speed) {
+  Serial.println("EXEC:BACKWARD");
   analogWrite(pinENA, speed);
   analogWrite(pinENB, speed);
   digitalWrite(pinIN1, LOW);
@@ -83,6 +85,7 @@ void moveBackward(int speed) {
 }
 
 void turnLeft(int speed) {
+  Serial.println("EXEC:LEFT");
   analogWrite(pinENA, speed);
   analogWrite(pinENB, speed);
   digitalWrite(pinIN1, LOW);
@@ -92,6 +95,7 @@ void turnLeft(int speed) {
 }
 
 void turnRight(int speed) {
+  Serial.println("EXEC:RIGHT");
   analogWrite(pinENA, speed);
   analogWrite(pinENB, speed);
   digitalWrite(pinIN1, HIGH);
@@ -101,6 +105,7 @@ void turnRight(int speed) {
 }
 
 void stopMotors() {
+  Serial.println("EXEC:STOP");
   analogWrite(pinENA, 0);
   analogWrite(pinENB, 0);
   digitalWrite(pinIN1, LOW);
