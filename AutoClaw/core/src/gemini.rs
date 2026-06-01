@@ -10,7 +10,6 @@ use reqwest::blocking::Client;
 use serde::{Deserialize, Serialize};
 use std::time::Duration;
 
-const GEMINI_MODEL: &str = "gemini-2.0-flash";
 const GEMINI_URL: &str =
     "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
 
