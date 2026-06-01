@@ -99,13 +99,30 @@ camera_lock = threading.Lock()   # VideoCapture không thread-safe
 def init_camera() -> bool:
     global camera
     try:
-        camera = cv2.VideoCapture(CAMERA_INDEX)
+        # Tự động tối ưu hóa cho Pi OS Bookworm (Libcamera) qua GStreamer nếu chạy Linux và dùng index 0
+        if CAMERA_INDEX == 0 and os.name != "nt":
+            gst_pipeline = (
+                f"libcamerasrc ! video/x-raw, width={CAMERA_WIDTH}, height={CAMERA_HEIGHT}, framerate={CAMERA_FPS}/1 ! "
+                "videoconvert ! appsink"
+            )
+            logger.info("🎥 Đang kết nối camera qua GStreamer (libcamerasrc)...")
+            camera = cv2.VideoCapture(gst_pipeline, cv2.CAP_GSTREAMER)
+            if not camera.isOpened():
+                logger.warning("⚠ GStreamer failed, falling back to standard V4L2 index 0...")
+                camera = cv2.VideoCapture(0)
+        else:
+            camera = cv2.VideoCapture(CAMERA_INDEX)
+
         if not camera.isOpened():
             logger.error("❌ Camera không tìm thấy")
             return False
-        camera.set(cv2.CAP_PROP_FRAME_WIDTH,  CAMERA_WIDTH)
-        camera.set(cv2.CAP_PROP_FRAME_HEIGHT, CAMERA_HEIGHT)
-        camera.set(cv2.CAP_PROP_FPS,          CAMERA_FPS)
+
+        # Chỉ cấu hình width/height/fps nếu không dùng GStreamer pipeline (vì pipeline đã định nghĩa sẵn)
+        if not (CAMERA_INDEX == 0 and os.name != "nt"):
+            camera.set(cv2.CAP_PROP_FRAME_WIDTH,  CAMERA_WIDTH)
+            camera.set(cv2.CAP_PROP_FRAME_HEIGHT, CAMERA_HEIGHT)
+            camera.set(cv2.CAP_PROP_FPS,          CAMERA_FPS)
+
         # Warm-up: đọc vài frame đầu để sensor ổn định
         for _ in range(3):
             camera.read()
