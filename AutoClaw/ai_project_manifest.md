@@ -106,8 +106,8 @@ This file contains the structured configuration, context, and project informatio
       "S": "Stop (clears movement state & re-centers servo)",
       "A": "Auto Mode ON (engages autonomous navigation)",
       "M": "Manual Mode (disengages autonomous navigation & stops motors)",
-      "1": "Servo Left (0 degrees)",
-      "2": "Servo Right (180 degrees)",
+      "1": "Servo Left (30 degrees)",
+      "2": "Servo Right (150 degrees)",
       "3": "Servo Center (90 degrees)"
     },
     "keyboard_shortcuts": {

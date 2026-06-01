@@ -13,7 +13,7 @@ AutoClaw là một dự án nghiên cứu và phát triển xe robot tự hành 
 *   🕹️ **Thủ công** — Điều khiển qua nút bấm D-pad trên web dashboard.
 *   🎙️ **Giọng nói** — Điều khiển rẽ hướng, di chuyển và xoay góc camera bằng khẩu lệnh tiếng Việt (sử dụng Web Speech API).
 *   ✋ **Cử chỉ tay** — Nhận diện cử chỉ bàn tay bằng mô hình AI MediaPipe (xử lý trực tiếp trên GPU Client qua trình duyệt).
-*   🤖 **Tự lái** — Thuật toán tránh vật cản chủ động sử dụng cảm biến siêu âm HC-SR04 kết hợp động cơ Servo SG90 để quét 180 độ.
+*   🤖 **Tự lái** — Thuật toán tránh vật cản chủ động sử dụng cảm biến siêu âm HC-SR04 kết hợp động cơ Servo SG90 để quét 60 độ (phạm vi từ 30° đến 150°).
 
 ---
 
