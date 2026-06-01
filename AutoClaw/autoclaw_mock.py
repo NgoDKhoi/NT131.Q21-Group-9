@@ -23,7 +23,7 @@ class AutoClawMock:
                 self.is_auto = False
                 logger.info("🤖 [MOCK-CAR] Auto Drive stopped via emergency stop")
         elif cmd in ('1', '2', '3'):
-            positions = {'1': 30, '2': 150, '3': 90}
+            positions = {'1': 150, '2': 30, '3': 90}
             self.servo_pos = positions.get(cmd, 90)
             logger.info(f"📸 [MOCK-CAR] Servo camera turned to position {cmd} ({self.servo_pos} deg)")
         elif cmd == 'F':

@@ -19,13 +19,13 @@ const int pinSERVO = 3;  // SG90 Servo Control Pin (Connected to Pin 3)
 
 // ── Servo Configuration ─────────────────────────────────────
 Servo cameraServo;
-const int angleLeft   = 30; // 60 degrees left from center (90 - 60 = 30)
+const int angleLeft   = 150; // 60 degrees left from center (physically 150 due to inverted mounting)
 const int angleCenter = 90;
-const int angleRight  = 150; // 60 degrees right from center (90 + 60 = 150)
+const int angleRight  = 30;  // 60 degrees right from center (physically 30 due to inverted mounting)
 
 // ── Robot Speed Configuration ───────────────────────────────
-const int speedForward  = 255; // Maximum speed (PWM 255) for forward and backward movement
-const int speedTurn     = 255; // Maximum speed (PWM 255) for turning maneuvers
+const int speedForward  = 230; // Safe high speed (max 255) for forward/backward to avoid brownout
+const int speedTurn     = 230; // Safe high speed (max 255) for turning to avoid brownout
 
 // ── State Management ────────────────────────────────────────
 enum Mode {
