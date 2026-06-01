@@ -105,7 +105,23 @@ Tài liệu này tổng hợp các câu hỏi chuyên sâu mà Hội đồng ph�
   3. **Gửi lệnh điều khiển (API Request):** Sau khi nhận dạng được cử chỉ tương ứng, JavaScript trên frontend tự động gửi một yêu cầu HTTP GET đến Flask API của Pi (ví dụ `/control/F`).
   4. **Thực thi lệnh vật lý (Lõi an toàn & Vi điều khiển):** Flask nhận request, chuyển qua lớp an toàn Rust để kiểm tra khoảng cách vật cản. Nếu an toàn, lệnh sẽ được đẩy qua Serial xuống Arduino để điều khiển các bánh xe di chuyển.
 
+### Q14: Mô tả luồng hoạt động chi tiết của tính năng điều khiển bằng giọng nói (tiếng Việt)?
+* **Trả lời:** Luồng điều khiển bằng giọng nói được thiết kế dựa trên dịch vụ nhận dạng tiếng Việt trực tuyến kết hợp tiền xử lý từ khóa trên Client:
+  1. **Thu âm & Chuyển âm thoại thành văn bản (STT):** Trình duyệt của người dùng sử dụng API **Web Speech API** (cụ thể là đối tượng `webkitSpeechRecognition`) để truy cập Microphone. Khi người dùng nói, âm thanh được gửi lên máy chủ nhận diện của Google Cloud (qua Web API tích hợp sẵn trong trình duyệt Chrome) để chuyển đổi thành văn bản tiếng Việt thời gian thực với cấu hình `recognition.lang = 'vi-VN'`.
+  2. **Tiền xử lý chuỗi và Trích xuất từ khóa (Keyword Extraction):** Đoạn văn bản trả về sẽ được đưa vào hàm xử lý JavaScript trên Dashboard:
+     * Toàn bộ chuỗi chữ được chuẩn hóa (chuyển sang chữ thường, loại bỏ khoảng trắng thừa).
+     * Sử dụng cấu trúc rẽ nhánh khớp chuỗi (String Matching) để lọc ra các từ khóa điều khiển:
+       * *"tiến" / "đi thẳng" / "tới"* $\rightarrow$ Map với lệnh Tiến (`F`).
+       * *"lùi" / "xuống"* $\rightarrow$ Map với lệnh Lùi (`B`).
+       * *"rẽ trái" / "quay trái" / "sang trái"* $\rightarrow$ Map với lệnh Rẽ Trái (`L`).
+       * *"rẽ phải" / "quay phải" / "sang phải"* $\rightarrow$ Map với lệnh Rẽ Phải (`R`).
+       * *"dừng" / "đứng lại" / "stop"* $\rightarrow$ Map với lệnh Dừng (`S`).
+       * *"nhìn trái" / "nhìn phải" / "nhìn thẳng"* $\rightarrow$ Map tương ứng với góc quay Servo (`1`, `2`, `3`).
+       * *"ai phân tích" / "quét vật cản"* $\rightarrow$ Gọi API phân tích hình ảnh AI (`/ai_analyze`).
+  3. **Gửi và Thực thi lệnh:** JavaScript frontend gọi API tương ứng đến Flask Server `/control/<cmd>` hoặc `/ai_analyze` giống như luồng cử chỉ tay để điều khiển xe vật lý.
+
 ---
+
 
 <a name="nhóm-6"></a>
 ## 🛠️ Nhóm 6: Lỗi kỹ thuật và Sự cố thực tế đã vượt qua
