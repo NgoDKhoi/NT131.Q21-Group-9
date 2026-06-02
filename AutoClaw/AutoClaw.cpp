@@ -24,8 +24,8 @@ const int angleCenter = 90;
 const int angleRight  = 30;  // 60 degrees right from center (physically 30 due to inverted mounting)
 
 // ── Robot Speed Configuration ───────────────────────────────
-const int speedForward  = 230; // Safe high speed (max 255) for forward/backward to avoid brownout
-const int speedTurn     = 230; // Safe high speed (max 255) for turning to avoid brownout
+const int speedForward  = 180; // Reduced to 180 for demo recording stability
+const int speedTurn     = 180; // Reduced to 180 for gentler turning maneuvers
 
 // ── State Management ────────────────────────────────────────
 enum Mode {
