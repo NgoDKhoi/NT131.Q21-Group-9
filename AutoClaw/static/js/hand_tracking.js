@@ -31,7 +31,7 @@ let lastCmdTime = 0;
 
 const CMD_INTERVAL     = 500;   // ms — cooldown lệnh di chuyển
 const TOGGLE_INTERVAL  = 2000;  // ms — cooldown ILoveYou (tránh spam toggleAuto)
-const SNAPSHOT_INTERVAL = 3000; // ms — cooldown Victory (tránh spam /snapshot)
+const SNAPSHOT_INTERVAL = 10000; // ms — cooldown Victory (tránh spam /snapshot, nâng lên 10s tránh rate limit)
 let   lastSnapshotTime  = 0;
 
 // ════════════════════════════════════════════════════════════
@@ -153,8 +153,33 @@ async function triggerAiAnalyze() {
   if (aiDesc) aiDesc.textContent = 'Đang phân tích...';
   if (aiSuggestWrap) aiSuggestWrap.style.display = 'none';
 
+  // Chụp ảnh từ webcam trên trình duyệt nếu có
+  let imageBase64 = null;
+  if (videoEl && videoEl.srcObject) {
+    try {
+      const tempCanvas = document.createElement('canvas');
+      tempCanvas.width = videoEl.videoWidth || 320;
+      tempCanvas.height = videoEl.videoHeight || 240;
+      const tempCtx = tempCanvas.getContext('2d');
+      tempCtx.drawImage(videoEl, 0, 0, tempCanvas.width, tempCanvas.height);
+      const dataUrl = tempCanvas.toDataURL('image/jpeg', 0.85);
+      imageBase64 = dataUrl.split(',')[1];
+    } catch (e) {
+      console.warn("Không thể chụp ảnh từ webcam client:", e);
+    }
+  }
+
   try {
-    const res = await fetch('/ai_analyze');
+    let res;
+    if (imageBase64) {
+      res = await fetch('/ai_analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image: imageBase64 })
+      });
+    } else {
+      res = await fetch('/ai_analyze');
+    }
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
     const data = await res.json();

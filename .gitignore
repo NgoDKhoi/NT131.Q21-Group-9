@@ -54,3 +54,6 @@ ENV/
 *.njsproj
 *.sln
 *.swp
+
+# Presentation assets/scripts
+ThuyetTrinh/

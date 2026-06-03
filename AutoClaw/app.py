@@ -18,7 +18,7 @@ import base64
 import json
 import io
 
-from flask import Flask, render_template, Response, jsonify
+from flask import Flask, render_template, Response, jsonify, request
 from dotenv import load_dotenv
 import cv2
 import telebot
@@ -371,10 +371,10 @@ def snapshot():
         },
     )
 
-@app.route("/ai_analyze")
+@app.route("/ai_analyze", methods=["GET", "POST"])
 def ai_analyze():
     """
-    Chụp ảnh từ camera, mã hóa Base64 và gửi lên để phân tích qua Gemini API.
+    Chụp ảnh từ camera (hoặc nhận từ client), mã hóa Base64 và gửi lên để phân tích qua Gemini API.
     """
     api_key = os.getenv("GEMINI_API_KEY")
     if not api_key:
@@ -387,7 +387,14 @@ def ai_analyze():
     if robot is None:
         return jsonify({"status": "error", "message": "Arduino/Robot chưa kết nối"}), 503
 
-    image_base64 = get_camera_frame_base64()
+    # Thử lấy ảnh base64 từ client gửi lên (trong trường hợp chạy thử trên PC)
+    image_base64 = None
+    if request.method == "POST" and request.is_json:
+        image_base64 = request.get_json().get("image")
+
+    # Nếu client không gửi ảnh, tiến hành capture từ camera của thiết bị chạy server
+    if not image_base64:
+        image_base64 = get_camera_frame_base64()
 
     try:
         decision_str = robot.analyze_scene(image_base64, api_key)
