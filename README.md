@@ -1,351 +1,466 @@
-# AutoClaw 🤖
+<div align="center">
 
-> **Autonomous Edge AI Robot** — Xe tự hành thông minh tích hợp điều khiển đa phương thức: tay (D-pad), giọng nói (tiếng Việt), cử chỉ bàn tay (AI MediaPipe), thuật toán tự động tránh vật cản và giám sát/điều khiển từ xa qua **Telegram Bot**.
->
-> 🏫 Đồ án môn học · Khoa Mạng Máy Tính & Truyền Thông · Đại học Công nghệ Thông tin UIT
+# 🤖 AutoClaw
 
----
+### Autonomous Edge AI Robot with Multimodal Control
 
-## 📖 Giới thiệu dự án
+<img src="docs/images/hero_robot.png" alt="AutoClaw Assembled Robot" width="440" style="border-radius: 12px; margin: 16px 0; box-shadow: 0 4px 12px rgba(0,0,0,0.3);"/>
 
-AutoClaw là một dự án nghiên cứu và phát triển xe robot tự hành ứng dụng trí tuệ nhân tạo biên (Edge AI) xây dựng trên nền tảng bộ kit xe thông minh **ELEGOO Smart Robot Car Kit** kết hợp mạch điều khiển trung tâm **Raspberry Pi 4** và **Arduino Uno R3**. Hệ thống hỗ trợ 4 phương thức tương tác độc lập và đồng thời:
+An intelligent self-driving robot car powered by **Raspberry Pi 4** + **Arduino Uno R3**, featuring real-time obstacle avoidance, AI-powered vision analysis, hand gesture recognition, Vietnamese voice commands, and remote monitoring via Telegram — all controllable through a sleek Cyberpunk-themed web dashboard.
 
-*   🕹️ **Thủ công** — Điều khiển qua nút bấm D-pad trên web dashboard.
-*   🎙️ **Giọng nói** — Điều khiển rẽ hướng, di chuyển và xoay góc camera bằng khẩu lệnh tiếng Việt (sử dụng Web Speech API).
-*   ✋ **Cử chỉ tay** — Nhận diện cử chỉ bàn tay bằng mô hình AI MediaPipe (xử lý trực tiếp trên GPU Client qua trình duyệt).
-*   🤖 **Tự lái** — Thuật toán tránh vật cản chủ động sử dụng cảm biến siêu âm HC-SR04 kết hợp động cơ Servo SG90 để quét 60 độ (phạm vi từ 30° đến 150°).
+> 📚 *Academic Project — Faculty of Computer Networks & Communications, University of Information Technology (UIT), Vietnam*
 
----
+[![Python](https://img.shields.io/badge/Python-3.10+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://python.org)
+[![Rust](https://img.shields.io/badge/Rust-Safety_Core-000000?style=for-the-badge&logo=rust&logoColor=white)](https://www.rust-lang.org)
+[![Flask](https://img.shields.io/badge/Flask-Web_Server-000000?style=for-the-badge&logo=flask&logoColor=white)](https://flask.palletsprojects.com)
+[![Arduino](https://img.shields.io/badge/Arduino-Firmware-00979D?style=for-the-badge&logo=arduino&logoColor=white)](https://www.arduino.cc)
+[![MediaPipe](https://img.shields.io/badge/MediaPipe-Hand_Tracking-0097A7?style=for-the-badge&logo=google&logoColor=white)](https://mediapipe.dev)
+[![Gemini](https://img.shields.io/badge/Gemini_2.0-Vision_AI-4285F4?style=for-the-badge&logo=googlegemini&logoColor=white)](https://ai.google.dev)
+[![Telegram](https://img.shields.io/badge/Telegram-Bot_Control-26A5E4?style=for-the-badge&logo=telegram&logoColor=white)](https://core.telegram.org/bots)
+[![Raspberry Pi](https://img.shields.io/badge/Raspberry_Pi_4-Edge_Server-A22846?style=for-the-badge&logo=raspberrypi&logoColor=white)](https://www.raspberrypi.org)
 
-## ✨ Tính năng nổi bật
-
-*   🛡️ **Safety Reflex (Phanh khẩn cấp & Phản xạ an toàn)**: Lõi bảo vệ bằng **Rust** liên tục giám sát khoảng cách cảm biến từ cache. Khi nhận lệnh Tiến (`F`) mà khoảng cách phía trước < 15 cm, hệ thống sẽ kích hoạt phản xạ an toàn tự động ghi đè và gửi lệnh Dừng (`S`) xuống Arduino ngay lập tức để ngăn ngừa va chạm vật lý.
-*   🧠 **Trí tuệ Nhân tạo đa phương thức (Multimodal AI Control)**:
-    *   **Điều khiển cử chỉ (MediaPipe)**: Nhận diện và dịch trực tiếp các cử chỉ bàn tay (✌ để quét AI, 👌 tiến, ✊ dừng, ☝ lùi, 👈 rẽ trái, 👉 rẽ phải, 🤟 bật/tắt tự động) trên GPU client.
-    *   **Điều khiển giọng nói**: Nhận diện khẩu lệnh tiếng Việt qua Web Speech API để vận hành xe rảnh tay.
-    *   **Giám sát & Điều khiển qua Telegram**: Tích hợp Telegram Bot chạy đa luồng hỗ trợ điều khiển xe, kiểm tra trạng thái cảm biến và chụp ảnh snapshot gửi trực tiếp về ứng dụng chat từ xa.
-*   🤖 **Lõi tuần tra tự trị AutoClaw Agent (Rust Core)**: Vòng lặp Tokio không đồng bộ trong Rust Core tự động thu thập khoảng cách, chụp ảnh camera qua Flask `/snapshot`, gọi Gemini 2.0 Flash Vision để nhận diện chướng ngại vật bằng tiếng Việt và đề xuất hướng di chuyển tối ưu kèm theo **lý giải chi tiết (reasoning)** hiển thị trực tiếp trên dashboard.
-*   🔌 **Tối ưu hóa phần cứng & Tương thích Real/Mock**:
-    *   **Cơ chế Safe Servo**: Tự động kết nối/ngắt (`attach`/`detach`) động cơ Servo SG90 để giải phóng Timer 1 trên Arduino Uno R3, giải quyết triệt để lỗi xung đột ngắt làm sai lệch cảm biến siêu âm.
-    *   **Thu hẹp góc quét**: Cấu hình góc quét tối ưu **60 độ** (30° - 90° - 150°) giúp giảm thiểu thời gian quay servo và tăng tốc độ phản hồi vật lý khi quét vật cản.
-    *   **Chế độ mô phỏng linh hoạt (Simulation Fallback)**: Flask tự động nạp thư viện giả lập [autoclaw_mock.py](file:///c:/Users/khoi1/MyRepo/NT131.Q21-Group-9/AutoClaw/autoclaw_mock.py) nếu không có phần cứng vật lý kết nối, giúp việc debug giao diện và kiểm thử AI thuận tiện.
+</div>
 
 ---
 
-## 🛠️ Phần cứng & Sơ đồ đấu nối Arduino
+## 📖 Overview
 
-### Linh kiện sử dụng
-1.  **Raspberry Pi 4 (8GB)**: Đóng vai trò máy chủ Flask Web Server, xử lý camera Snapshot và điều phối lệnh.
-2.  **Arduino Uno R3**: Vi xử lý cấp thấp chịu trách nhiệm đọc cảm biến, quét servo và điều khiển trực tiếp động cơ.
-3.  **Module L298N**: Mạch cầu H để điều khiển tốc độ và hướng của 4 động cơ DC.
-4.  **Cảm biến siêu âm HC-SR04**: Đo khoảng cách tới chướng ngại vật trước mặt.
-5.  **Động cơ Servo SG90**: Xoay cảm biến siêu âm và camera sang Trái/Phải/Giữa.
-6.  **Raspberry Pi Camera Module (hoặc USB Webcam)**: Ghi hình môi trường thực tế trước xe để gửi dữ liệu về cho Gemini Vision AI phân tích.
+AutoClaw is a full-stack robotics project that transforms the **ELEGOO Smart Robot Car Kit** into an AI-powered autonomous vehicle. The system combines edge computing, computer vision, and natural language processing to create a robot that can be controlled through **5 independent interaction modes** simultaneously:
 
-```text
-Motor Trái   : ENA = chân 5  | IN1 = chân 7  | IN2 = chân 8
-Motor Phải   : ENB = chân 6  | IN3 = chân 9  | IN4 = chân 11
-Cảm biến âm  : TRIG = chân A5 | ECHO = chân A4
-Động cơ Servo: PIN = chân 3
-Giao tiếp    : Cổng USB Serial (9600 baud, chân TX=1, RX=0)
+| Mode | Technology | Description |
+| :---: | :--- | :--- |
+| 🕹️ **Manual** | Web D-pad + Keyboard | Direct control via interactive Cyberpunk dashboard |
+| 🎙️ **Voice** | Web Speech API | Vietnamese voice commands processed on-device |
+| ✋ **Gesture** | MediaPipe (Client GPU) | Real-time hand gesture recognition via webcam |
+| 🤖 **AI Patrol** | Gemini 2.0 Flash Vision | Autonomous navigation with visual reasoning |
+| 📱 **Telegram** | Telegram Bot API | Remote monitoring & control from anywhere |
+
+---
+
+## ✨ Key Features
+
+### 🛡️ Safety Reflex — Hardware-Level Emergency Braking
+A **Rust-powered safety core** continuously monitors the ultrasonic sensor cache. When a forward command (`F`) is issued and an obstacle is detected within **15 cm**, the system **instantly overrides** it to a stop command (`S`) — bypassing all software layers for zero-latency collision prevention.
+
+### 🧠 AI Vision Assistant — Gemini 2.0 Flash
+Trigger with a ✌️ hand gesture or voice command. The robot captures a snapshot, sends it to **Google Gemini 2.0 Flash Vision API**, and receives back a detailed scene description in Vietnamese along with a recommended driving action — complete with reasoning displayed on the dashboard.
+
+### ✋ Client-Side Hand Tracking — MediaPipe
+Hand gesture recognition runs **entirely on the client's GPU** via WebGL using MediaPipe Tasks Vision SDK. No server-side processing needed. 7 gesture commands mapped to vehicle controls with custom geometry-based detection for maximum accuracy.
+
+### 🎙️ Vietnamese Voice Control — Web Speech API
+Built-in speech recognition supporting natural Vietnamese commands. Operates directly in the browser with zero server overhead. Supports movement, camera rotation, auto-drive toggle, and AI analysis triggers.
+
+### 🔧 Rust + Python Hybrid Architecture — PyO3 Binding
+The performance-critical safety core and autonomous agent loop are written in **Rust** (compiled via **Maturin/PyO3**), while the web server and orchestration layer use **Python/Flask** — combining Rust's memory safety with Python's ecosystem flexibility.
+
+### 📱 Telegram Bot — Remote Command Center
+Full remote control and monitoring through Telegram. Send movement commands, check sensor readings, capture live snapshots, and switch driving modes — all secured with Chat ID authentication.
+
+---
+
+## 📸 Screenshots & Demo
+
+<div align="center">
+  <img src="docs/images/web_dashboard.png" alt="AutoClaw Web Dashboard" width="850" style="border-radius: 8px;"/>
+  <p><em>🖥️ Cyberpunk-themed Control Dashboard (Mobile Responsive & Desktop Interface)</em></p>
+</div>
+
+<br/>
+
+<table>
+  <tr>
+    <td align="center" width="50%">
+      <img src="docs/images/hand_gesture_tracking.png" alt="MediaPipe Hand Tracking" width="420" style="border-radius: 8px;"/>
+      <br/>
+      <b>✋ Real-Time Hand Gesture Recognition (Client GPU)</b>
+      <p><i>MediaPipe 21-landmark tracking with custom geometry (👌 OK Sign → Move Forward)</i></p>
+    </td>
+    <td align="center" width="50%">
+      <img src="docs/images/ai_vision_snapshot.png" alt="Gemini Vision Scene Reasoning" width="420" style="border-radius: 8px;"/>
+      <br/>
+      <b>🧠 AI Vision Assistant & Driving Reasoning</b>
+      <p><i>Gemini 2.0 Flash analyzes obstacles and recommends safe actions (✌️ Victory trigger)</i></p>
+    </td>
+  </tr>
+  <tr>
+    <td align="center" colspan="2">
+      <img src="docs/images/telegram_bot.png" alt="Telegram Bot Control" width="380" style="border-radius: 8px;"/>
+      <br/>
+      <b>📱 Remote Telemetry & Live Photo Surveillance via Telegram</b>
+      <p><i>Control driving modes (<code>/auto cpp</code>), check sensor distance (<code>/status</code>), and request live camera captures (<code>/snapshot</code>)</i></p>
+    </td>
+  </tr>
+</table>
+
+---
+
+## 🏗️ System Architecture
+
+```mermaid
+graph TD
+    subgraph Client["🌐 Client Browser"]
+        Dashboard["Web Dashboard<br/>(HTML/CSS/JS)"]
+        MediaPipe["MediaPipe<br/>Hand Tracking"]
+        SpeechAPI["Web Speech API<br/>Voice Commands"]
+    end
+
+    subgraph Cloud["☁️ Cloud Services"]
+        Gemini["Google Gemini 2.0<br/>Flash Vision API"]
+        TelegramAPI["Telegram Bot API"]
+    end
+
+    subgraph Pi["🍓 Raspberry Pi 4"]
+        Flask["Flask Web Server<br/>(Python)"]
+        RustCore["Rust Safety Core<br/>(PyO3 + Tokio)"]
+        Camera["USB Camera"]
+    end
+
+    subgraph Arduino["⚡ Arduino Uno R3"]
+        Firmware["C++ Firmware"]
+        HC_SR04["HC-SR04<br/>Ultrasonic Sensor"]
+        Servo["SG90 Servo"]
+        L298N["L298N Motor Driver"]
+        Motors["4x DC Motors"]
+    end
+
+    Dashboard -->|"HTTPS / API"| Flask
+    MediaPipe -->|"Gesture → JSON"| Flask
+    SpeechAPI -->|"Voice → Command"| Flask
+    Flask <-->|"HTTPS"| Gemini
+    Flask <-->|"HTTPS"| TelegramAPI
+    Camera -->|"Snapshot"| Flask
+    Flask <-->|"PyO3 Binding"| RustCore
+    RustCore <-->|"USB Serial<br/>115200 baud"| Firmware
+    Firmware --> HC_SR04
+    Firmware --> Servo
+    Firmware --> L298N
+    L298N --> Motors
 ```
 
 ---
 
-## 📂 Cấu trúc thư mục
+## 🚀 Quick Start (Local Simulation)
 
-```
-AutoClaw/
-├── app.py                  # Flask Web Server (Python)
-├── requirements.txt        # Các thư viện Python cần cài đặt
-├── .env                    # Lưu trữ cấu hình cổng COM/Serial, Camera Index, Port Web, Key bảo mật, Token API và Telegram Bot.
-├── AutoClaw.cpp            # Firmware Arduino Uno (C++)
-├── autoclaw_mock.py        # Giả lập xe AutoClaw (Mock Car) khi chạy Localhost
-│
-├── core/                   # Lõi an toàn Rust Safety Engine & AutoClaw Agent
-│   ├── Cargo.toml          # Khai báo thư viện phụ thuộc của Rust (bao gồm các thư viện pyo3, serialport, tokio...)
-│   └── src/
-│       ├── lib.rs          # PyO3 Bindings, reader thread đọc Serial, APIs start_agent/stop_agent
-│       ├── gemini.rs       # Module Vision AI gọi API Gemini 2.0
-│       └── agent.rs        # Loop agent tuần tra tự trị (Tokio loop, chứa ControlCarTool, GetDistanceTool, CaptureSnapshotTool)
-│
-├── templates/
-│   └── index.html          # Giao diện điều khiển Web Dashboard (HTML)
-│
-└── static/
-    ├── css/
-    │   └── style.css       # CSS thiết kế giao diện Cyberpunk neon retro
-    └── js/
-        ├── api.js          # Khai báo namespace AppState và hàm gửi API lệnh
-        ├── ui.js           # Polling cập nhật UI, phím tắt keyboard, hiển thị log
-        ├── voice.js        # Nhận dạng giọng nói Web Speech API tiếng Việt
-        └── hand_tracking.js# AI MediaPipe nhận diện cử chỉ bàn tay qua webcam
-```
+Run the full web dashboard on your PC in **simulation mode** — no hardware required.
 
----
+### Prerequisites
+- **Python 3.10+** installed
+- A modern web browser (Chrome / Edge recommended)
 
-## 🚀 Hướng dẫn cài đặt và vận hành
+### Steps
 
-### Yêu cầu hệ thống
-*   **Hệ điều hành**: Raspberry Pi OS (Debian 12 Bookworm / Trixie hoặc mới hơn) trên Pi 4 / Windows 10/11 trên PC.
-*   **Python**: Phiên bản 3.10 đến 3.13.
-*   **Rust & Cargo**: Để biên dịch lõi an toàn `autoclaw_core`.
-*   **Arduino IDE**: Để nạp chương trình lên Arduino Uno R3.
-*   **Thư viện hệ thống (Linux/Pi)**: `libssl-dev`, `pkg-config`, `libudev-dev`, `libopenblas-dev` (xem chi tiết ở Bước 5).
-
----
-
-### 🍓 Hướng dẫn 1: Triển khai thực tế trên Raspberry Pi 4 (Ưu tiên)
-
-Triển khai thực tế trên xe robot thông qua sự kết hợp giữa **Raspberry Pi 4** (làm máy chủ web và AI) và **Arduino Uno R3** (điều khiển phần cứng). Quy trình lắp đặt và cấu hình cụ thể như sau:
-
----
-
-#### 🔌 GIAI ĐOẠN A: CHUẨN BỊ PHẦN CỨNG & NẠP CODE ARDUINO
-
-##### Bước 1: Lắp ráp bộ kit xe ELEGOO
-* Lắp ráp động cơ, khung gầm, mạch cầu H L298N, cảm biến siêu âm HC-SR04 và servo SG90 theo tài liệu hướng dẫn của bộ kit xe thông minh ELEGOO.
-* Kết nối các dây điều khiển động cơ và cảm biến vào các chân cắm trên Arduino Uno R3 theo đúng **Sơ đồ chân cắm** ở phần [Phần cứng & Sơ đồ đấu nối Arduino](#️-phần-cứng--sơ-đồ-đấu-nối-arduino) phía trên.
-
-##### Bước 2: Nạp firmware cho Arduino Uno R3 (trên máy tính cá nhân)
-1. Kết nối mạch Arduino Uno R3 vào máy tính cá nhân (PC/Laptop) của bạn bằng cáp USB.
-2. Mở file [AutoClaw.cpp](AutoClaw.cpp) bằng công cụ **Arduino IDE**.
-3. **Quan trọng**: Rút dây kết nối RX/TX (chân 0, 1) trên mạch Arduino ra trước khi nạp để tránh lỗi xung đột cổng Serial.
-4. Trên Arduino IDE, chọn đúng loại Board mạch là **Arduino Uno** và cổng COM kết nối tương ứng.
-5. Tiến hành biên dịch và nạp chương trình (nút **Upload**). Sau khi nạp thành công, cắm lại dây kết nối RX/TX vào các chân 0, 1.
-
-##### Bước 3: Kết nối vật lý Arduino Uno với Raspberry Pi 4
-1. Rút cáp kết nối USB của Arduino Uno ra khỏi máy tính cá nhân.
-2. Cắm cáp USB này từ Arduino Uno vào một trong các cổng USB của mạch **Raspberry Pi 4**.
-3. Gắn camera (Raspberry Pi Camera Module hoặc USB Webcam) vào Pi 4.
-4. Cấp nguồn để khởi động xe robot và mạch Raspberry Pi 4.
-
----
-
-#### 💻 GIAI ĐOẠN B: TRIỂN KHAI PHẦN MỀM TRÊN RASPBERRY PI 4
-
-##### Bước 4: Kết nối SSH vào Raspberry Pi 4
-1. Đảm bảo Raspberry Pi 4 và máy tính cá nhân của bạn đang kết nối chung một mạng Wi-Fi (hoặc mạng nội bộ LAN).
-2. Tìm địa chỉ IP của Raspberry Pi 4 trong mạng (có thể quét qua phần mềm quét IP hoặc xem trên router).
-3. Mở terminal trên máy tính cá nhân và kết nối SSH sang Pi 4:
-   ```bash
-   ssh pi@<IP_RASPBERRY_PI>
-   ```
-   *(Thay đổi `pi` thành username của Pi nếu bạn đặt tên khác).*
-
-##### Bước 5: Cài đặt các thư viện hệ thống cần thiết qua APT
-Sau khi đã kết nối SSH thành công vào Pi 4, chạy lệnh cài đặt các package phát triển cần thiết cho OpenCV, OpenSSL (yêu cầu bởi Rust crate `reqwest`), libudev (yêu cầu bởi crate `serialport`) và các dependencies khác:
 ```bash
-sudo apt update
-sudo apt install -y build-essential pkg-config libssl-dev libudev-dev libopenblas-dev libjpeg-dev libtiff-dev libpng-dev
-```
-> **Lưu ý:** `libssl-dev` + `pkg-config` là **bắt buộc** cho crate `reqwest` → `openssl-sys`. `libudev-dev` là **bắt buộc** cho crate `serialport` → `libudev-sys`. Nếu thiếu bất kỳ package nào, `maturin develop` sẽ báo lỗi build.
-
-##### Bước 6: Tải mã nguồn và thiết lập Môi trường ảo Python (venv)
-Để tránh lỗi chặn cài thư viện toàn cục (`externally-managed-environment`) trên Debian, khởi tạo môi trường ảo Python trong thư mục dự án:
-```bash
+# 1. Clone the repository
 git clone https://github.com/NgoDKhoi/NT131.Q21-Group-9.git
 cd NT131.Q21-Group-9/AutoClaw
 
-# Khởi tạo và kích hoạt môi trường ảo
-python3 -m venv venv
-source venv/bin/activate
-```
-
-##### Bước 7: Cài đặt các dependencies Python
-Nâng cấp công cụ pip và cài đặt toàn bộ thư viện:
-```bash
-pip install --upgrade pip
+# 2. Install Python dependencies
 pip install -r requirements.txt
-```
 
-##### Bước 8: Cài đặt Rust Compiler và biên dịch Rust Core
-1. Cài đặt toolchain Rust trên Pi 4:
-   ```bash
-   curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-   ```
-   *Chọn tùy chọn `1` (mặc định) và đợi quá trình cài đặt hoàn tất.*
-2. Cập nhật biến môi trường cho terminal hiện tại:
-   ```bash
-   source $HOME/.cargo/env
-   ```
-3. **Kiểm tra lại** đã cài đủ thư viện hệ thống (Bước 5), đặc biệt `libssl-dev` và `pkg-config`:
-   ```bash
-   pkg-config --libs openssl   # Phải trả về "-lssl -lcrypto", nếu báo lỗi thì quay lại Bước 5
-   ```
-4. Biên dịch lõi an toàn `autoclaw_core` bằng Maturin:
-   ```bash
-   cd core
-   maturin develop --release
-   cd ..
-   ```
+# 3. Create environment config
+copy .env.example .env        # Windows
+# cp .env.example .env        # Linux/macOS
 
-##### Bước 9: Cấu hình cổng kết nối và môi trường trên Pi
-Sao chép file cấu hình mẫu `.env.example` thành `.env` và điền thông số thực tế của bạn:
-```bash
-cp .env.example .env
-```
-Sử dụng trình soạn thảo văn bản (ví dụ `nano .env`) để điền `GEMINI_API_KEY`, `TELEGRAM_BOT_TOKEN` và `TELEGRAM_CHAT_ID` để kích hoạt đầy đủ tính năng AI và Telegram Bot.
+# 4. (Optional) Set CAMERA_INDEX=-1 in .env to free webcam for hand tracking
 
-##### Bước 10: Khởi chạy và vận hành
-Kích hoạt máy chủ điều khiển trên Pi:
-```bash
+# 5. Launch the server
 python app.py
+
+# 6. Open your browser
+# → http://localhost:5000
 ```
-* Server sẽ lắng nghe tại cổng `5000`. Bạn mở trình duyệt trên điện thoại hoặc máy tính trong mạng LAN và truy cập: `http://<IP_RASPBERRY_PI>:5000`.
-* *Lưu ý: Để sử dụng các tính năng Camera tay và Nhận diện giọng nói từ xa (yêu cầu kết nối HTTPS bảo mật), hãy xem thêm mục **Cấu hình Ngrok để truy cập qua HTTPS** ở phía dưới.*
 
----
-
-### 💻 Hướng dẫn 2: Triển khai nhanh trên Windows/PC (Localhost - Giả lập)
-
-Để chạy thử nghiệm giao diện web và thuật toán trên máy tính cá nhân (sử dụng camera webcam giả lập và serial giả lập):
-
-1. **Tải mã nguồn**:
-   ```bash
-   git clone https://github.com/NgoDKhoi/NT131.Q21-Group-9.git
-   cd NT131.Q21-Group-9/AutoClaw
-   ```
-2. **Cài đặt thư viện Python**:
-   ```bash
-   pip install -r requirements.txt
-   ```
-3. **Biên dịch Rust Core** (Yêu cầu đã cài đặt Rust từ trước):
-   ```bash
-   cd core
-   maturin develop --release
-   cd ..
-   ```
-   *Mẹo: Nếu chưa có Rust trên Windows, backend sẽ tự động chuyển sang chế độ giả lập (`autoclaw_mock.py`) để kiểm thử UI mà không bị crash.*
-4. **Tạo cấu hình môi trường**:
-   Sao chép file cấu hình mẫu `.env.example` thành `.env` và điền các thông tin của bạn (đặc biệt là API key Gemini và Token Bot Telegram nếu muốn dùng các tính năng AI & điều khiển từ xa):
-   * Trên Windows (PowerShell):
-     ```powershell
-     copy .env.example .env
-     ```
-   * Hoặc tạo thủ công file `.env` từ nội dung mẫu sau:
-     ```env
-     SERIAL_PORT=COM3 # Thay đổi thành cổng COM thực tế của bạn
-     CAMERA_INDEX=0
-     GEMINI_API_KEY=YOUR_GEMINI_API_KEY_HERE # Điền API Key Gemini của bạn để chạy AI
-     TELEGRAM_BOT_TOKEN=YOUR_TELEGRAM_BOT_TOKEN_HERE
-     TELEGRAM_CHAT_ID=YOUR_TELEGRAM_CHAT_ID_HERE
-     ```
-5. **Chạy server**:
-   ```bash
-   python app.py
-   ```
-   Truy cập `http://localhost:5000` trên trình duyệt.
-
----
-
-## 🎮 Hướng dẫn điều khiển
-
-### 1. Phím tắt bàn phím
-*   `W` hoặc `↑`: Đi tiến
-*   `S` hoặc `↓`: Đi lùi
-*   `A` hoặc `←`: Rẽ trái
-*   `D` hoặc `→`: Rẽ phải
-*   `X` hoặc `Phím Cách (Space)`: Dừng xe khẩn cấp
-*   `P`: Bật / Tắt chế độ tự lái (Auto Drive)
-*   `V`: Bật / Tắt nhận diện giọng nói
-*   `G`: Kích hoạt Trợ lý AI Phân tích (Gemini Vision) mô tả cảnh vật và gợi ý hướng rẽ nhấp nháy trên nút điều hướng
-*   `1` / `2` / `3`: Xoay camera (Trái / Phải / Giữa)
-
-### 2. Khẩu lệnh giọng nói (Tiếng Việt)
-*   *"tiến" / "đi thẳng" / "tới"* $\rightarrow$ Tiến
-*   *"lùi" / "xuống"* $\rightarrow$ Lùi
-*   *"rẽ trái" / "quay trái"* $\rightarrow$ Rẽ trái
-*   *"rẽ phải" / "quay phải"* $\rightarrow$ Rẽ phải
-*   *"dừng" / "đứng lại" / "stop"* $\rightarrow$ Dừng xe
-*   *"nhìn trái" / "nhìn phải" / "nhìn thẳng"* $\rightarrow$ Xoay camera tương ứng
-*   *"tự lái" / "tự động"* $\rightarrow$ Bật/Tắt chế độ tự lái
-*   *"ai phân tích" / "ai xem trước mặt" / "quét vật cản"* $\rightarrow$ Gọi trợ lý AI phân tích bằng camera xe và gợi ý hướng đi
-
-### 3. Cử chỉ bàn tay (MediaPipe)
-*   👌 **OK Sign**: Đi tiến
-*   ✊ **Closed Fist (Nắm đấm)**: Dừng lại
-*   ☝ **Pointing Up (Ngón trỏ chỉ lên)**: Đi lùi
-*   👈 **Thumb Left (Ngón cái trái)**: Rẽ trái
-*   👉 **Thumb Right (Ngón cái phải)**: Rẽ phải
-*   🤟 **I Love You**: Bật/Tắt tự lái
-*   ✌ **Victory (Chữ V)**: Gọi trợ lý AI chụp ảnh, mô tả vật cản bằng tiếng Việt (dưới 15 từ) và đề xuất hướng di chuyển nhấp nháy trên giao diện
-*   *Lưu ý: Không dùng MJPEG stream liên tục mà chỉ gửi 1 ảnh khi có cử chỉ hoặc khẩu lệnh để tiết kiệm tối đa token.*
-
----
-
-## 🌐 Các API Endpoints của Flask Server
-
-Flask Web Server cung cấp các API RESTful sau để frontend hoặc các ứng dụng bên thứ ba giao tiếp và điều khiển robot:
-
-| Endpoint | Phương thức | Tham số | Mô tả | Định dạng phản hồi |
-| :--- | :--- | :--- | :--- | :--- |
-| `/` | `GET` | Không | Trả về trang Web Dashboard chính. | HTML |
-| `/control/<cmd>` | `GET` | `cmd`: `F` (Tiến), `B` (Lùi), `L` (Trái), `R` (Phải), `S` (Dừng), `1` (Xoay servo trái), `2` (Xoay servo phải), `3` (Xoay servo giữa) | Gửi lệnh di chuyển hoặc điều khiển góc quay servo camera xuống Arduino. *Lưu ý: Lệnh `F` sẽ bị bộ lọc Safety Reflex chặn và chuyển thành `S` nếu khoảng cách vật cản < 15cm.* | `{"status": "success", "command": cmd}` |
-| `/auto/<state>` | `GET` | `state`: `off` (Tắt tự lái), `cpp` (Tự lái tránh vật cản C++ trên Arduino), `ai` (AI Agent tự lái sử dụng Gemini Vision) | Thiết lập chế độ lái tự động cho robot. Khi chuyển sang `ai`, Flask sẽ kích hoạt AutoClaw Agent chạy bằng Rust (gọi `robot.start_agent(api_key)`), chạy ngầm một vòng lặp quyết định Tokio. Khi tắt hoặc đổi chế độ, Flask sẽ gọi `robot.stop_agent()`. | `{"status": "success", "mode": state}` |
-| `/status` | `GET` | Không | Polling thông tin trạng thái xe (khoảng cách hiện tại, chế độ tự lái và log phân tích của AI). Được gọi bởi frontend mỗi 500ms. | `{"distance": "25.4" (hoặc "---"), "auto": "off"/"cpp"/"ai", "ai_log": "..."}` |
-| `/snapshot` | `GET` | Không | Chụp 1 khung hình JPEG tĩnh từ camera Pi trên xe theo yêu cầu. Tự động trả về ảnh giả lập Cyberpunk nếu không kết nối camera. | Ảnh JPEG (mimetype: `image/jpeg`) |
-| `/ai_analyze` | `GET` | Không | Chụp ảnh từ camera, mã hóa Base64 và gửi lên Rust Core để phân tích vật cản và lấy gợi ý hướng đi bằng Gemini API. | `{"status": "success", "image": "data:image/jpeg;base64,...", "description": "...", "command": "..."}` |
-
----
-
-## 🤖 Telegram Bot — Giám sát & Điều khiển từ xa
-
-AutoClaw tích hợp sẵn **Telegram Bot** cho phép bạn giám sát và điều khiển xe robot từ bất cứ đâu qua ứng dụng Telegram trên điện thoại.
-
-### Thiết lập Telegram Bot:
-
-1. **Tạo Bot**: Mở Telegram, tìm [@BotFather](https://t.me/BotFather), gửi lệnh `/newbot` và làm theo hướng dẫn. Sao chép **Bot Token** được cung cấp.
-2. **Lấy Chat ID**: Gửi tin nhắn bất kỳ cho bot, sau đó truy cập `https://api.telegram.org/bot<TOKEN>/getUpdates` để lấy `chat.id` của bạn.
-3. **Cấu hình `.env`**:
-   ```env
-   TELEGRAM_BOT_TOKEN=<Bot Token từ BotFather>
-   TELEGRAM_CHAT_ID=<Chat ID của bạn>
-   ```
-4. **Khởi động lại server** (`python app.py`). Bot sẽ tự động chạy ngầm.
-
-### Các lệnh Telegram Bot:
-
-| Lệnh | Mô tả | Yêu cầu Chat ID |
-| :--- | :--- | :---: |
-| `/start` hoặc `/help` | Hiển thị hướng dẫn sử dụng | Không |
-| `/status` | Xem khoảng cách cảm biến và chế độ lái hiện tại | Không |
-| `/snapshot` | Chụp ảnh thời gian thực từ camera xe | Không |
-| `/control <F/B/L/R/S>` | Di chuyển xe thủ công (qua Safety Reflex) | **Có** |
-| `/auto <off/cpp/ai>` | Chuyển chế độ lái tự động | **Có** |
+> [!TIP]
+> The system automatically falls back to **Mock simulation mode** when no Rust core or Arduino hardware is detected. All dashboard features (D-pad, voice, hand gestures) remain fully functional for testing.
 
 > [!NOTE]
-> **Bảo mật**: Nếu đã cấu hình `TELEGRAM_CHAT_ID`, chỉ tài khoản Telegram có Chat ID trùng khớp mới được phép sử dụng lệnh điều khiển (`/control`, `/auto`). Các lệnh xem trạng thái (`/status`, `/snapshot`) vẫn hoạt động công khai nếu không cấu hình Chat ID.
-
-> [!WARNING]
-> Nếu `TELEGRAM_BOT_TOKEN` chưa được cấu hình hoặc giữ giá trị mặc định placeholder, bot sẽ tự động bỏ qua mà không làm ảnh hưởng tới Flask server.
+> For the full deployment guide on **Raspberry Pi 4** with real hardware, see the [Deployment Guide](#-full-deployment-guide-raspberry-pi-4) section below.
 
 ---
 
-## 🔒 Cấu hình Ngrok để truy cập từ xa qua HTTPS
+## 🔧 Hardware Components
 
-> [!IMPORTANT]
-> Trình duyệt Chrome và Edge áp dụng chính sách bảo mật nghiêm ngặt đối với **Web Speech API** (Nhận diện giọng nói) và **Camera Webcam** (Nhận diện cử chỉ tay). Các API này **chỉ hoạt động** trên `localhost` hoặc kết nối bảo mật **HTTPS**.
-> Khi triển khai dự án trên Raspberry Pi trong mạng LAN, việc truy cập bằng IP của Pi (ví dụ `http://192.168.1.50:5000`) từ điện thoại hoặc máy tính khác sẽ **không sử dụng được camera tay và giọng nói**. Bạn cần cấu hình đường truyền bảo mật HTTPS bằng **Ngrok**.
+<div align="center">
+  <img src="docs/images/hardware_block_diagram.png" alt="Hardware Architecture Diagram" width="680" style="border-radius: 8px;"/>
+  <p><em>🔌 Hardware Connection & Subsystem Interface Diagram</em></p>
+</div>
 
-### Hướng dẫn thiết lập Ngrok Tunnel:
+<br/>
 
-1. **Đăng ký tài khoản**: Truy cập [ngrok.com](https://ngrok.com/), đăng ký một tài khoản miễn phí và lấy mã thông báo xác thực (`Authtoken`).
-2. **Cấu hình Authtoken**:
-   - Nếu sử dụng ngrok CLI cài đặt trên hệ điều hành, chạy lệnh:
-     ```bash
-     ngrok config add-authtoken <MÃ_TOKEN_CỦA_BẠN>
-     ```
-   - Hoặc bạn có thể thêm cấu hình này vào file `.env` để quản lý tập trung:
-     ```env
-     NGROK_AUTHTOKEN=<MÃ_TOKEN_CỦA_BẠN>
-     ```
-3. **Khởi chạy đường truyền HTTPS**:
-   Trong khi Flask Server đang chạy (ở port `5000`), mở một terminal mới và chạy lệnh:
-   ```bash
-   ngrok http 5000
+| Component | Role | Key Specs |
+| :--- | :--- | :--- |
+| **Raspberry Pi 4 (8GB)** | High-level controller & web server | Quad-core Cortex-A72 1.5GHz, Wi-Fi 5GHz, Bluetooth 5.0 |
+| **Arduino Uno R3** | Low-level real-time MCU | ATmega328P 16MHz, 32KB Flash, 2KB SRAM |
+| **L298N Motor Driver** | H-bridge for DC motors | 2A per channel, 5V–35V |
+| **HC-SR04 Ultrasonic** | Distance measurement | Range: 2–400 cm, Accuracy: ±0.3 cm |
+| **SG90 Servo** | Sensor/camera rotation | 180° range, 0.12s/60° speed |
+| **4x DC Gear Motors** | Vehicle propulsion | 1:48 ratio, 3V–6V, 200 RPM |
+| **USB Webcam / Pi Camera** | Visual input for AI | Min 720p resolution |
+
+### Pin Mapping (Arduino Uno R3)
+```
+Left Motors  : ENA=5  | IN1=7  | IN2=8
+Right Motors : ENB=6  | IN3=9  | IN4=11
+Ultrasonic   : TRIG=A5 | ECHO=A4
+Servo        : PIN=3
+Serial       : USB (115200 baud)
+```
+
+<details>
+<summary><strong>🔍 Exploded 3D Assembly Diagram (ELEGOO Smart Car Chassis)</strong></summary>
+<br/>
+<div align="center">
+  <img src="docs/images/hardware_exploded_view.png" alt="Exploded 3D Assembly Diagram" width="750" style="border-radius: 8px;"/>
+  <p><em>Exploded Mechanical View of Robot Car Assembly</em></p>
+</div>
+</details>
+
+---
+
+## 👥 Team & Contribution
+
+<div align="center">
+  <p>Detailed metrics tracked via <a href="https://github.com/NgoDKhoi/NT131.Q21-Group-9/graphs/contributors">GitHub Contributors Graph</a></p>
+</div>
+
+<table align="center">
+  <thead>
+    <tr>
+      <th align="center">Member</th>
+      <th align="center">Commits</th>
+      <th align="center">Code In (Additions)</th>
+      <th align="center">Code Out (Deletions)</th>
+      <th align="left">Key Responsibilities</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td align="center">
+        <a href="https://github.com/NgoDKhoi">
+          <img src="https://avatars.githubusercontent.com/u/113754487?v=4" width="75px;" alt="NgoDKhoi" style="border-radius:50%"/><br/>
+          <b>NgoDKhoi</b>
+        </a>
+      </td>
+      <td align="center">
+        <img src="https://img.shields.io/badge/Commits-67-3776AB?style=flat-square" alt="Commits: 67"/>
+      </td>
+      <td align="center">
+        <img src="https://img.shields.io/badge/+7,340-2ea44f?style=flat-square" alt="+7,340 lines"/>
+      </td>
+      <td align="center">
+        <img src="https://img.shields.io/badge/-2,751-cb2431?style=flat-square" alt="-2,751 lines"/>
+      </td>
+      <td align="left">
+        • Rust Safety Core & PyO3 Bindings<br/>
+        • Flask Web Backend & REST APIs<br/>
+        • MediaPipe & Gemini Vision AI Integration<br/>
+        • Telegram Bot Control & UI Dashboard
+      </td>
+    </tr>
+    <tr>
+      <td align="center">
+        <a href="https://github.com/KhoiPhan-UIT">
+          <img src="https://avatars.githubusercontent.com/u/237803206?v=4" width="75px;" alt="KhoiPhan-UIT" style="border-radius:50%"/><br/>
+          <b>KhoiPhan-UIT</b>
+        </a>
+      </td>
+      <td align="center">
+        <img src="https://img.shields.io/badge/Commits-8-3776AB?style=flat-square" alt="Commits: 8"/>
+      </td>
+      <td align="center">
+        <img src="https://img.shields.io/badge/+100-2ea44f?style=flat-square" alt="+100 lines"/>
+      </td>
+      <td align="center">
+        <img src="https://img.shields.io/badge/-162-cb2431?style=flat-square" alt="-162 lines"/>
+      </td>
+      <td align="left">
+        • Hardware Testing & Sensor Calibration<br/>
+        • Firmware Verification & Code Review
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+---
+
+## 📚 Detailed Documentation
+
+<details>
+<summary><strong>📂 Project Structure</strong></summary>
+
+```
+AutoClaw/
+├── app.py                  # Flask Web Server (Python) — main entry point
+├── requirements.txt        # Python dependencies
+├── .env                    # Environment config (Serial port, API keys, tokens)
+├── AutoClaw.cpp            # Arduino Uno firmware (C++)
+├── autoclaw_mock.py        # Mock simulation when no hardware connected
+│
+├── core/                   # Rust Safety Engine & Autonomous Agent
+│   ├── Cargo.toml          # Rust dependencies (pyo3, serialport, tokio, reqwest)
+│   └── src/
+│       ├── lib.rs          # PyO3 bindings, Serial reader thread, agent APIs
+│       ├── gemini.rs       # Gemini 2.0 Flash Vision API client
+│       └── agent.rs        # Autonomous patrol loop (Tokio async runtime)
+│
+├── templates/
+│   └── index.html          # Cyberpunk web dashboard
+│
+└── static/
+    ├── css/style.css        # Neon retro Cyberpunk styling
+    └── js/
+        ├── api.js           # HTTP client & app state management
+        ├── ui.js            # Real-time UI polling, keyboard shortcuts
+        ├── voice.js         # Vietnamese speech recognition (Web Speech API)
+        └── hand_tracking.js # MediaPipe hand gesture recognition
+```
+
+</details>
+
+<details>
+<summary><strong>🎮 Controls Reference</strong></summary>
+
+### Keyboard Shortcuts
+| Key | Action |
+| :---: | :--- |
+| `W` / `↑` | Move forward |
+| `S` / `↓` | Move backward |
+| `A` / `←` | Turn left |
+| `D` / `→` | Turn right |
+| `X` / `Space` | Emergency stop |
+| `P` | Toggle auto-drive mode |
+| `V` | Toggle voice recognition |
+| `G` | Trigger AI vision analysis |
+| `1` / `2` / `3` | Rotate camera (Left / Right / Center) |
+
+### Hand Gestures (MediaPipe)
+| Gesture | Action |
+| :---: | :--- |
+| 👌 OK Sign | Move forward |
+| ✊ Closed Fist | Stop |
+| ☝️ Pointing Up | Move backward |
+| 👈 Thumb Left | Turn left |
+| 👉 Thumb Right | Turn right |
+| 🤟 I Love You | Toggle auto-drive |
+| ✌️ Victory | Trigger AI vision analysis |
+
+### Vietnamese Voice Commands
+| Command | Action |
+| :--- | :--- |
+| *"tiến" / "đi thẳng" / "tới"* | Move forward |
+| *"lùi" / "xuống"* | Move backward |
+| *"rẽ trái" / "quay trái"* | Turn left |
+| *"rẽ phải" / "quay phải"* | Turn right |
+| *"dừng" / "stop"* | Stop |
+| *"nhìn trái" / "nhìn phải" / "nhìn thẳng"* | Rotate camera |
+| *"tự lái" / "tự động"* | Toggle auto-drive |
+| *"ai phân tích" / "quét vật cản"* | AI vision analysis |
+
+</details>
+
+<details>
+<summary><strong>🌐 REST API Endpoints</strong></summary>
+
+| Endpoint | Method | Description |
+| :--- | :---: | :--- |
+| `/` | `GET` | Web dashboard |
+| `/control/<cmd>` | `GET` | Send movement command (`F`, `B`, `L`, `R`, `S`) or servo command (`1`, `2`, `3`). Subject to Safety Reflex override. |
+| `/auto/<state>` | `GET` | Set driving mode: `off`, `cpp` (obstacle avoidance), `ai` (Gemini-powered patrol) |
+| `/status` | `GET` | Poll vehicle status (distance, mode, AI log). Called every 500ms by frontend. |
+| `/snapshot` | `GET` | Capture a single JPEG frame from the onboard camera |
+| `/ai_analyze` | `GET` | Capture + send to Gemini API for visual analysis and driving recommendation |
+
+</details>
+
+<details>
+<summary><strong>📱 Telegram Bot Setup & Commands</strong></summary>
+
+### Setup
+1. Create a bot via [@BotFather](https://t.me/BotFather) on Telegram → copy the **Bot Token**
+2. Send any message to your bot, then visit `https://api.telegram.org/bot<TOKEN>/getUpdates` to find your **Chat ID**
+3. Add both values to your `.env` file:
+   ```env
+   TELEGRAM_BOT_TOKEN=<your_token>
+   TELEGRAM_CHAT_ID=<your_chat_id>
    ```
-4. **Truy cập dự án**:
-   Ngrok sẽ cung cấp một đường dẫn công khai có dạng `https://xxxx-xxxx.ngrok-free.app`. Hãy sao chép liên kết này, mở trên trình duyệt điện thoại hoặc máy tính client của bạn. 
-   - Hệ thống lúc này chạy qua HTTPS bảo mật nên trình duyệt sẽ cho phép yêu cầu quyền Micro và Camera.
-   - Bạn có thể điều khiển xe robot từ xa qua internet mà không gặp bất cứ rào cản bảo mật nào!
+
+### Commands
+| Command | Description | Requires Chat ID |
+| :--- | :--- | :---: |
+| `/start` or `/help` | Show usage guide | No |
+| `/status` | View sensor data & current mode | No |
+| `/snapshot` | Capture live photo from the robot | No |
+| `/control <F/B/L/R/S>` | Manual driving command (with Safety Reflex) | **Yes** |
+| `/auto <off/cpp/ai>` | Switch driving mode | **Yes** |
+
+> **Security**: When `TELEGRAM_CHAT_ID` is configured, only the matching Telegram account can use control commands. Status and snapshot commands remain publicly accessible.
+
+</details>
+
+<details>
+<summary><strong>🍓 Full Deployment Guide (Raspberry Pi 4)</strong></summary>
+
+### Phase A: Hardware Setup
+
+1. **Assemble** the ELEGOO Smart Robot Car Kit with motors, L298N, HC-SR04 sensor, and SG90 servo
+2. **Wire** components to Arduino Uno R3 following the [Pin Mapping](#pin-mapping-arduino-uno-r3) above
+3. **Flash firmware**: Open `AutoClaw.cpp` in Arduino IDE → disconnect RX/TX pins → Upload → reconnect pins
+4. **Connect** Arduino to Raspberry Pi 4 via USB cable
+5. **Attach** camera (Pi Camera Module or USB webcam)
+
+### Phase B: Software Setup on Pi
+
+```bash
+# 1. Install system dependencies
+sudo apt update
+sudo apt install -y build-essential pkg-config libssl-dev libudev-dev libopenblas-dev
+
+# 2. Clone and set up Python virtual environment
+git clone https://github.com/NgoDKhoi/NT131.Q21-Group-9.git
+cd NT131.Q21-Group-9/AutoClaw
+python3 -m venv venv
+source venv/bin/activate
+
+# 3. Install Python dependencies
+pip install --upgrade pip
+pip install -r requirements.txt
+
+# 4. Install Rust and compile safety core
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+source $HOME/.cargo/env
+cd core && maturin develop --release && cd ..
+
+# 5. Configure environment
+cp .env.example .env
+nano .env  # Fill in SERIAL_PORT, GEMINI_API_KEY, TELEGRAM tokens
+
+# 6. Launch
+python app.py
+# → Access at http://<PI_IP>:5000
+```
+
+### HTTPS Access (Required for Voice & Camera)
+
+> Browsers require HTTPS for Web Speech API and webcam access from non-localhost origins.
+
+```bash
+# Option: Use Ngrok for secure tunneling
+# Add NGROK_AUTHTOKEN to .env, then:
+ngrok http 5000
+# → Use the generated https://xxxx.ngrok-free.app URL on your phone
+```
+
+</details>
+
+---
+
+## 📄 License
+
+This project is licensed under the [MIT License](LICENSE).
+
+---
+
+<div align="center">
+  <sub>Built with ❤️ using Rust, Python, and Arduino</sub>
+</div>
