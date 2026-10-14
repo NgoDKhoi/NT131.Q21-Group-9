@@ -98,6 +98,10 @@ camera_lock = threading.Lock()   # VideoCapture không thread-safe
 
 def init_camera() -> bool:
     global camera
+    if CAMERA_INDEX < 0:
+        logger.info("💡 Camera phần cứng đã tắt (CAMERA_INDEX=-1). Chế độ giả lập bật — Webcam sẵn sàng cho trình duyệt.")
+        return False
+
     try:
         # Tự động tối ưu hóa cho Pi OS Bookworm (Libcamera) qua GStreamer nếu chạy Linux và dùng index 0
         if CAMERA_INDEX == 0 and os.name != "nt":
@@ -237,8 +241,8 @@ def get_camera_frame():
         cv2.putText(frame, "STATUS: LIVE (MOCK)", (50, 130), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 207, 255), 1)
         ts_str = time.strftime("%H:%M:%S")
         cv2.putText(frame, f"TIME: {ts_str}", (50, 160), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 207, 0), 1)
-        cv2.drawMarker(frame, (160, 120), (0, 0, 255), cv2.MARKER_CROSS, 20, 2)
-        logger.warning("⚠ Camera read failed, using mock frame instead")
+        if CAMERA_INDEX >= 0:
+            logger.warning("⚠ Camera read failed, using mock frame instead")
     return frame
 
 def get_camera_frame_base64() -> str:
