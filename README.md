@@ -153,7 +153,7 @@ Run the full web dashboard on your PC in **simulation mode** — no hardware req
 ```bash
 # 1. Clone the repository
 git clone https://github.com/NgoDKhoi/NT131.Q21-Group-9.git
-cd NT131.Q21-Group-9/AutoClaw
+cd NT131.Q21-Group-9/server
 
 # 2. Install Python dependencies
 pip install -r requirements.txt
@@ -290,13 +290,7 @@ Serial       : USB (115200 baud)
 <summary><strong>📂 Project Structure</strong></summary>
 
 ```
-AutoClaw/
-├── app.py                  # Flask Web Server (Python) — main entry point
-├── requirements.txt        # Python dependencies
-├── .env                    # Environment config (Serial port, API keys, tokens)
-├── AutoClaw.cpp            # Arduino Uno firmware (C++)
-├── autoclaw_mock.py        # Mock simulation when no hardware connected
-│
+NT131.Q21-Group-9/
 ├── core/                   # Rust Safety Engine & Autonomous Agent
 │   ├── Cargo.toml          # Rust dependencies (pyo3, serialport, tokio, reqwest)
 │   └── src/
@@ -304,16 +298,36 @@ AutoClaw/
 │       ├── gemini.rs       # Gemini 2.0 Flash Vision API client
 │       └── agent.rs        # Autonomous patrol loop (Tokio async runtime)
 │
-├── templates/
-│   └── index.html          # Cyberpunk web dashboard
+├── server/                 # Flask Web Backend & UI Dashboard
+│   ├── app.py              # Main Flask server entry point
+│   ├── autoclaw_mock.py    # Mock simulation when no hardware connected
+│   ├── requirements.txt    # Python dependencies
+│   ├── .env                # Environment config (Serial port, API keys, tokens)
+│   ├── templates/
+│   │   └── index.html      # Cyberpunk web dashboard
+│   └── static/
+│       ├── css/style.css   # Neon retro Cyberpunk styling
+│       └── js/
+│           ├── api.js           # HTTP client & app state management
+│           ├── ui.js            # Real-time UI polling, keyboard shortcuts
+│           ├── voice.js         # Vietnamese speech recognition (Web Speech API)
+│           └── hand_tracking.js # MediaPipe hand gesture recognition
 │
-└── static/
-    ├── css/style.css        # Neon retro Cyberpunk styling
-    └── js/
-        ├── api.js           # HTTP client & app state management
-        ├── ui.js            # Real-time UI polling, keyboard shortcuts
-        ├── voice.js         # Vietnamese speech recognition (Web Speech API)
-        └── hand_tracking.js # MediaPipe hand gesture recognition
+├── firmware/               # Arduino Uno R3 Firmware & Component Tests
+│   ├── AutoClaw/
+│   │   └── AutoClaw.ino    # Main firmware sketch (flash via Arduino IDE)
+│   └── tests/              # Hardware component verification sketches
+│       ├── motor_test.ino
+│       ├── servo_test.ino
+│       └── ultrasonic_test.ino
+│
+├── docs/                   # Documentation, Architecture & Media
+│   ├── ai_architecture_manifest.md
+│   ├── ai_project_manifest.md
+│   └── images/             # System diagrams & demo captures
+│
+└── scripts/                # Standalone test & diagnostic utilities
+    └── list_models.py      # Gemini API model listing script
 ```
 
 </details>
@@ -405,7 +419,7 @@ AutoClaw/
 
 1. **Assemble** the ELEGOO Smart Robot Car Kit with motors, L298N, HC-SR04 sensor, and SG90 servo
 2. **Wire** components to Arduino Uno R3 following the [Pin Mapping](#pin-mapping-arduino-uno-r3) above
-3. **Flash firmware**: Open `AutoClaw.cpp` in Arduino IDE → disconnect RX/TX pins → Upload → reconnect pins
+3. **Flash firmware**: Open `firmware/AutoClaw/AutoClaw.ino` in Arduino IDE → disconnect RX/TX pins → Upload → reconnect pins
 4. **Connect** Arduino to Raspberry Pi 4 via USB cable
 5. **Attach** camera (Pi Camera Module or USB webcam)
 
@@ -418,13 +432,13 @@ sudo apt install -y build-essential pkg-config libssl-dev libudev-dev libopenbla
 
 # 2. Clone and set up Python virtual environment
 git clone https://github.com/NgoDKhoi/NT131.Q21-Group-9.git
-cd NT131.Q21-Group-9/AutoClaw
+cd NT131.Q21-Group-9
 python3 -m venv venv
 source venv/bin/activate
 
 # 3. Install Python dependencies
 pip install --upgrade pip
-pip install -r requirements.txt
+pip install -r server/requirements.txt
 
 # 4. Install Rust and compile safety core
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
@@ -432,6 +446,7 @@ source $HOME/.cargo/env
 cd core && maturin develop --release && cd ..
 
 # 5. Configure environment
+cd server
 cp .env.example .env
 nano .env  # Fill in SERIAL_PORT, GEMINI_API_KEY, TELEGRAM tokens
 

@@ -81,21 +81,23 @@ This file contains the structured configuration, context, and project informatio
     }
   },
   "repository_structure": {
-    "AutoClaw/app.py": "Flask server backend coordinating camera, local commands, and loading Rust serial engine",
-    "AutoClaw/requirements.txt": "Python dependencies listing",
-    "AutoClaw/.env": "Local environment variables (SERIAL_PORT, BAUD_RATE, FLASK_PORT, SECRET_KEY, NGROK_AUTHTOKEN, GEMINI_API_KEY, CAMERA_INDEX, TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID)",
-    "AutoClaw/AutoClaw.cpp": "Arduino Uno firmware carrying non-blocking obstacle avoidance state machine (millis-based)",
-    "AutoClaw/core/Cargo.toml": "Rust build configuration",
-    "AutoClaw/core/src/lib.rs": "Rust safety engine containing PyO3 binding, background serial reader thread, and APIs to start/stop the AutoClaw agent",
-    "AutoClaw/core/src/gemini.rs": "Vision AI client utilizing Gemini 2.0 Flash API to generate navigation commands",
-    "AutoClaw/core/src/agent.rs": "AutoClaw autonomous agent runner running a tokio background loop and querying Gemini Vision AI with combined sonar and camera perception data",
-    "AutoClaw/autoclaw_mock.py": "Python mock implementation of AutoClaw for offline and local testing without hardware",
-    "AutoClaw/templates/index.html": "Jinja2 dashboard markup containing system status, live camera panel, and D-pad control UI",
-    "AutoClaw/static/css/style.css": "Cyberpunk layout styles including reactive glow animations and layout frames",
-    "AutoClaw/static/js/api.js": "Command dispatch helper exposing window.cmd() and window.toggleAuto()",
-    "AutoClaw/static/js/ui.js": "UI status poller (AbortController backed), keyboard listener, and system logs compiler",
-    "AutoClaw/static/js/voice.js": "Web Speech API wrapper for continuous Vietnamese command mapping",
-    "AutoClaw/static/js/hand_tracking.js": "MediaPipe Vision-Tasks client tracking hand gestures with custom geometrical filters"
+    "server/app.py": "Flask server backend coordinating camera, local commands, and loading Rust serial engine",
+    "server/requirements.txt": "Python dependencies listing",
+    "server/.env": "Local environment variables (SERIAL_PORT, BAUD_RATE, FLASK_PORT, SECRET_KEY, NGROK_AUTHTOKEN, GEMINI_API_KEY, CAMERA_INDEX, TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID)",
+    "firmware/AutoClaw/AutoClaw.ino": "Arduino Uno firmware carrying non-blocking obstacle avoidance state machine (millis-based)",
+    "firmware/tests/": "Hardware component verification sketches (motor, servo, ultrasonic)",
+    "core/Cargo.toml": "Rust build configuration",
+    "core/src/lib.rs": "Rust safety engine containing PyO3 binding, background serial reader thread, and APIs to start/stop the AutoClaw agent",
+    "core/src/gemini.rs": "Vision AI client utilizing Gemini 2.0 Flash API to generate navigation commands",
+    "core/src/agent.rs": "AutoClaw autonomous agent runner running a tokio background loop and querying Gemini Vision AI with combined sonar and camera perception data",
+    "server/autoclaw_mock.py": "Python mock implementation of AutoClaw for offline and local testing without hardware",
+    "server/templates/index.html": "Jinja2 dashboard markup containing system status, live camera panel, and D-pad control UI",
+    "server/static/css/style.css": "Cyberpunk layout styles including reactive glow animations and layout frames",
+    "server/static/js/api.js": "Command dispatch helper exposing window.cmd() and window.toggleAuto()",
+    "server/static/js/ui.js": "UI status poller (AbortController backed), keyboard listener, and system logs compiler",
+    "server/static/js/voice.js": "Web Speech API wrapper for continuous Vietnamese command mapping",
+    "server/static/js/hand_tracking.js": "MediaPipe Vision-Tasks client tracking hand gestures with custom geometrical filters",
+    "scripts/list_models.py": "Diagnostic tool to list available Gemini models"
   },
   "control_mappings": {
     "serial_protocol_commands": {
